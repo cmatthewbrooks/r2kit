@@ -81,7 +81,9 @@ class YaraRule:
             funcj = json.loads(func)
             
             for op in funcj['ops']:
-                comment_instructions += '// ' + op['bytes'] + ' ' * (16 - len(op['bytes'])) + op['opcode'] + '\r\n' + ' ' * 8
+                comment_instructions += '// ' + op['bytes']
+                comment_instructions += ' ' * (16 - len(op['bytes']))
+                comment_instructions +=  op['opcode'] + '\r\n' + ' ' * 8
 
 
         return comment_instructions
