@@ -471,53 +471,8 @@ class r2utils:
     This is the test function for various testing.
     '''
 
-def test():
-
-    #Set up the test file.
-    pwd = os.path.dirname(__file__)
-    test_exe_fullpath = os.path.join(pwd,'../testexe/test2_keyboy_wab32res.dll')
-    
-    #Instantiate the class
-    utils = r2utils()
-
-    #Test get_funcj_list_from_file
-    funcj_list = utils.get_funcj_list_from_file(test_exe_fullpath)
-
-    print '\nTest check_is_import_func\n'
-
-    for funcj in funcj_list:
-        if utils.check_is_import_func(funcj):
-           #print json.dumps(funcj, indent=4)
-           print funcj['name']
-
-    print '\nTest check_is_thunk_func\n'
-
-    for funcj in funcj_list:
-        if utils.check_is_thunk_func(funcj):
-           #print json.dumps(funcj, indent=4)
-           print funcj['name']
-
-    print '\nTest check_is_wrapper_func\n'
-
-    for funcj in funcj_list:
-        if utils.check_is_wrapper_func(funcj):
-           #print json.dumps(funcj, indent=4)
-           print funcj['name']
-
-    print '\nTest check_is_first_round_func\n'
-
-    for funcj in funcj_list:
-        if utils.check_is_first_round_func(funcj):
-           #print json.dumps(funcj, indent=4)
-           print funcj['name']
-
-    print '\nTest check_is_utility_func\n'
-
-    for funcj in funcj_list:
-        if utils.check_is_utility_func(funcj):
-           #print json.dumps(funcj, indent=4)
-           print funcj['name']        
-
+def test():    
+    pass
 
 
 if __name__ == "__main__":

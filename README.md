@@ -22,4 +22,7 @@ See WORKFLOW.md for more information.
 ## Thanks
 
 Thanks to Sanoop (@s4n7h0) for a half-day workshop pushing my radare interest over the edge.
+
 Thanks to Maxime (@Maijin212) for a mailing-list response peaking my interest in r2pipes.
+
+Thanks to Marion (@pinkflawd) for r2graphity which was extremely helpful for r2pipes examples.
