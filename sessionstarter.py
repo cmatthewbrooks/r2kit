@@ -1,3 +1,36 @@
+'''
+Author: Matt Brooks, @cmatthewbrooks
+
+DESCRIPTION:
+
+The sessionstarter.py script is helpful when starting a new
+r2 session against a suspected malware target. It will handle
+auto-analysis as well as naming specific types of functions.
+
+ARGS:
+
+Use the optional -d flag to point to a directory of zsig files
+where each file has a .z extention.
+
+NOTES:
+
+- When using zsigs from a signature file, only the "bytes" sigs
+  are considered. The "refs" and "graphs" sigs are too loose for
+  my taste and in the instances where they match correctly, a
+  "bytes" signature exists for the same function. If you determine
+  a case where the "refs" or "graphs" signatures were useful without
+  an existing "bytes" signature, please file a Github issue.
+
+TODO:
+
+- Redesign structure so each "rename" function does not open and
+  close a separate pipe.
+
+- Add optional -f flag to provide a file arg similar to the -d
+  flag. There may be use cases where an analyst wants to use a
+  single zsig file that may be in a directory of other files.
+
+'''
 
 import os,sys
 import argparse
@@ -14,6 +47,9 @@ class SessionStarter:
         r2.cmd('aa; aac; aar')
         r2.quit()
 
+    # The start_session is the only method meant to be
+    # called outside the class.
+
     def start_session(self):
         
         self.rename_import_jmp_funcs()
@@ -22,6 +58,13 @@ class SessionStarter:
 
         if self.sigs_dir:
             self.rename_bytes_signatures(self.sigs_dir)
+
+
+    ###############################################################################
+
+    # These methods all handle categorical renaming and depend on the r2utils file
+    # for function categorization.
+
 
     def rename_import_jmp_funcs(self):
 
@@ -77,6 +120,8 @@ class SessionStarter:
         
         for root, dirs, files in os.walk(sigs_dir):
             for name in files:
+
+                #Personal preference but this is how I name zsig files.
                 if name.endswith('.z'):
 
                     r2.cmd('zo ' + os.path.join(root,name)) #Load the sigs from file
@@ -94,6 +139,9 @@ class SessionStarter:
                     r2.cmd('z-*') #Remove the sigs
 
         r2.quit()
+
+    # A small method to create a new function name. By default, r2 will only match functions
+    # and include that information as strings. The method above renames based on sane defaults.
 
     def create_lib_sig_name(self,lib,func):
         
