@@ -1,23 +1,56 @@
+'''
+Author: Matt Brooks, @cmatthewbrooks
 
-import r2pipe 
+DESCRIPTION:
+
+The funclist.py script obtains lists of specific
+function types to help an analyst focus on a category
+of functions. It currently can find the following
+function types:
+
+- First-round functions: Likely developer-written functions
+that do not have any call instructions.
+
+- Utility functions: Likely developer-written functions
+called by at least 3 other functions.
+
+ARGS:
+
+Use the -fr flag to list first-round functions and use the
+-u flag to list utility functions.
+
+To use the script against a file instead of within an r2
+session, use the -f flag with a /path/to/file.exe.
+
+NOTES:
+
+- This script can stand-alone outside an r2 session.
+
+TODO:
+
+- Improve "developer-written" identification. In current
+form, this will still identify library functions.
+
+'''
+
 import os,sys
 import argparse
 
+import r2pipe
 import r2utils as R2utils
 
 class FuncList:
-    '''
-    '''
 
     def __init__(self, list_type, file=None):
 
-        #Set all properties
         self.func_list = set()
         self.list_type = list_type
         self.file = file
 
-        #Populate the list
         self.populate_list(self.list_type, self.file)
+
+    # The next two methods are the init method and only external
+    # method. Everything below the '###' line is internal-only.
 
     def populate_list(self, list_type, file=None):
 
@@ -36,6 +69,16 @@ class FuncList:
 
         for func in sorted(self.func_list):
             print func
+
+    ####################################################################
+
+    '''
+    Right now, there are different methods for session v file access
+    as the instantiation of r2pipe differs.
+
+    These methods all make use of the r2utils class for checking
+    different function types.
+    '''
 
     def get_first_round_list_from_session(self):
 
@@ -92,7 +135,6 @@ class FuncList:
                 utility_funcs.append(funcj['name'])
 
         return utility_funcs
-
 
 
 if __name__ == '__main__':
