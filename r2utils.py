@@ -21,23 +21,10 @@ of information helpful:
 
 '''
 
-import r2pipe
-
 import os
 import json
 
-
-
-GADGETS = [
-
-{'name': 'enumerate_processes', 'api_chain': ['CreateToolhelp32Snapshot','Process32First','Process32Next']},
-{'name': 'search_files', 'api_chain': ['FindFirstFile','FindNextFile','FindClose']},
-{'name': 'query_regkey', 'api_chain': ['RegOpenKey','RegQueryValue','RegCloseKey']},
-{'name': 'access_resources', 'api_chain': ['FindResource','LoadResource','LockResource']}
-
-]
-
-
+import r2pipe
 
 class r2utils:
 
@@ -113,53 +100,6 @@ class r2utils:
         else:
             r2.quit()
             return {}
-
-####################################################################
-
-    def classify_function(self, func):
-
-        pass
-
-    def classify_function_complexity(self, funcj):
-
-        #TODO: Add basic block complexity
-
-        if len(funcj['ops']) > 50:
-            return 'complex'
-        else:
-            return 'simple'
-
-    def classify_call(self, opcode):
-
-        if 'call fcn.' in opcode:
-            return 'direct'
-        elif 'call loc.' in opcode:
-            return 'dynamic'
-        elif any(reg in opcode for reg in 
-            ['eax','ebx','ecx','edx','esi','edi','esp','ebp']):
-            return 'register'
-        elif 'call dword [sym.imp.' in opcode:
-            return 'win_api'
-
-
-####################################################################
-
-    def check_call_chain_is_api_only(self, call_chain):
-        
-        for call in call_chain:
-            if not self.classify_call(call) == 'win_api':
-                return False
-
-        return True
-
-    def check_call_chain_is_direct_only(self, call_chain):
-        
-        for call in call_chain:
-            if not self.classify_call(call) == 'direct':
-                return False
-
-        return True
-
 
 
 ####################################################################
@@ -323,22 +263,6 @@ class r2utils:
         else:
             return True
 
-    def check_is_direct_control_flow_func(self, funcj):
-        '''
-
-        '''
-        call_chain = self.get_raw_call_chain_from_funcj(funcj)
-
-        return self.check_call_chain_is_direct_only(call_chain)
-
-    def check_is_win_api_control_flow_func(self, funcj):
-        '''
-
-        '''
-        call_chain = self.get_raw_call_chain_from_funcj(funcj)
-
-        return self.check_call_chain_is_api_only(call_chain)
-
 
 
 ####################################################################
@@ -360,47 +284,12 @@ class r2utils:
 
         return count
 
-    def get_direct_call_count_from_funcj(self, funcj):
-
-        count = 0
-
-        for op in funcj['ops']:
-
-            if ('call' in op.get('opcode','N/A') and
-                self.classify_call(op.get('opcode','N/A'))) == 'direct':
-
-                count += 1        
-
-        return count
-
-    def get_win_api_call_count_from_funcj(self, funcj):
-
-        count = 0
-
-        for op in funcj['ops']:
-
-            if ('call' in op.get('opcode','N/A') and
-                self.classify_call(op.get('opcode','N/A'))) == 'win_api':
-
-                count += 1        
-
-        return count
-
     def parse_api_from_call(self, opcode):
 
         prefix = 'call dword [sym.imp'
 
         #The '-1' strips the right bracket off the end
         return opcode[len(prefix):len(opcode)-1]
-
-    def parse_clean_api_from_r2_api_cat(self, api):
-
-        if any(api.endswith(char) for char in ['A','W']):
-            api = api[:len(api)-1]
-        elif any(api.endswith(suffix) for suffix in ['ExA','ExW']):
-            api = api[:len(api)-3]
-
-        return str(api.rpartition('_')[2])
 
     def get_call_from_wrapper(self, funcj):
 
@@ -421,46 +310,6 @@ class r2utils:
             import_string = op.get('opcode','N/A')
 
         return import_string[len(prefix):len(import_string)-1]
-
-
-
-    def get_raw_call_chain_from_funcj(self, funcj):
-
-        call_chain = []
-
-        for op in funcj['ops']:
-            if 'call' in op.get('opcode','N/A'):
-                call_chain.append(op.get('opcode','N/A'))
-
-        return call_chain
-
-    def get_clean_call_chain_from_funcj(self, funcj):
-
-        call_chain = self.get_raw_call_chain_from_funcj(funcj)
-        clean_call_chain = []
-
-        for call in call_chain:
-
-            if self.classify_call(call) == 'win_api':
-                clean_call_chain.append(
-                    self.parse_clean_api_from_r2_api_cat(
-                    self.parse_api_from_call(call)    
-                    ))
-            else:
-                clean_call_chain.append(self.classify_call(call))
-
-        return clean_call_chain
-
-    def find_gadgets_in_clean_call_chain(self, call_chain):
-
-        gadgets = []
-
-        for gadget in GADGETS:
-            if set(gadget['api_chain']).issubset(set(call_chain)):
-                gadgets.append(gadget['name'])
-                gadgets.append(call_chain)
-        
-        return gadgets
 
 
 ####################################################################
