@@ -121,7 +121,7 @@ class SessionStarter:
         for root, dirs, files in os.walk(sigs_dir):
             for name in files:
 
-                #Personal preference but this is how I name zsig files.
+                # Handle the zignatures files
                 if name.endswith('.z'):
 
                     r2.cmd('zo ' + os.path.join(root,name)) #Load the sigs from file
@@ -137,6 +137,14 @@ class SessionStarter:
                                 r2.cmd('afn ' + self.create_lib_sig_name(name,z['name']))
 
                     r2.cmd('z-*') #Remove the sigs
+
+                # Handle the stringset signature files
+                if name.endswith('.stringset'):
+                    # stringsetsigs = Load the sigs from the .stringset file
+                    # filestringset = Load the string sets from the session file
+                    # For each string set in session file, check for matching string set in .stringset
+                    # If match, rename session file func with .stringset func name
+                    pass
 
         r2.quit()
 
