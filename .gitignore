@@ -16,3 +16,8 @@
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Project-specific testing #
+############################
+/dlls/*
+/libs/*
