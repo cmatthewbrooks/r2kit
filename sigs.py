@@ -5,11 +5,25 @@ DESCRIPTION:
 
 The sigs.py script creates Python dicts of func name/hash
 pairs for different types of intake patterns. Currently, the 
-native r2 zignatures can serve as an intake as can an experimental
-string set structure. These intake patterns are then hashed for
-smaller storage size and performance gains on matching.
+native r2 zignatures can serve as an intake (an experimental
+string set structure is coming soon). These intake patterns 
+are then hashed for smaller storage size and performance 
+gains on matching.
 
 ARGS:
+
+ - mode - use the -g flag if generating; use the -m flag if 
+   you're matching in-session.
+
+ - sigtype - use the -z flag if generating/matching based on
+   zignature intakes; the -ss flag is set up for string sets
+   but the Handler class has not been implemented yet.
+
+ - input - use the -i flag to pass input - a file or dir to 
+   source from if generating or match from if matching
+
+ - output - use the -o flag when matching to define the
+   output file.
 
 
 NOTES:
@@ -17,6 +31,8 @@ NOTES:
 - 
 
 TODO:
+
+- Implement the StringSetHandler class.
 
 - Redesign using inheritance from a parent class.
 
@@ -128,12 +144,6 @@ class ZigHandler:
                 r2.cmd('afn ' + self.generate_func_name(self.get_dict_key_from_value(file_hashes, funchash)))
 
         r2.quit()
-
-
-
-    ###################################################
-
-    # These methods are all internal to the class.
 
     def check_outfile(self, outfile):
 
