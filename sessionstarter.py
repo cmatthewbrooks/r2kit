@@ -52,12 +52,13 @@ class SessionStarter:
 
     def start_session(self):
         
+        if self.sigs_dir:
+            pass
+            #TODO: Implement sigs.py Handlers logic.
+
         self.rename_import_jmp_funcs()
         self.rename_wrapper_funcs()
         self.rename_global_assignments()
-
-        if self.sigs_dir:
-            self.rename_bytes_signatures(self.sigs_dir)
 
 
     ###############################################################################
@@ -110,41 +111,6 @@ class SessionStarter:
 
                 r2.cmd('s ' + str(funcj['addr']))
                 r2.cmd('afn globalassign_' + funcj['name'].replace('.',''))
-
-        r2.quit()
-
-    def rename_bytes_signatures(self,sigs_dir):
-
-        r2 = r2pipe.open() 
-        r2utils = R2utils.r2utils()
-        
-        for root, dirs, files in os.walk(sigs_dir):
-            for name in files:
-
-                # Handle the zignatures files
-                if name.endswith('.z'):
-
-                    r2.cmd('zo ' + os.path.join(root,name)) #Load the sigs from file
-                    r2.cmd('z/') #Search for hits
-                    zi_list = r2.cmd('zij') #Retrieve match information
-
-                    #Rename the "bytes"-based zignature matches
-                    if zi_list:
-                        zij = json.loads(zi_list)
-                        for z in zij:
-                            if 'sign.bytes' in z['name']:
-                                r2.cmd('s ' + str(z['offset']))
-                                r2.cmd('afn ' + self.create_lib_sig_name(name,z['name']))
-
-                    r2.cmd('z-*') #Remove the sigs
-
-                # Handle the stringset signature files
-                if name.endswith('.stringset'):
-                    # stringsetsigs = Load the sigs from the .stringset file
-                    # filestringset = Load the string sets from the session file
-                    # For each string set in session file, check for matching string set in .stringset
-                    # If match, rename session file func with .stringset func name
-                    pass
 
         r2.quit()
 
