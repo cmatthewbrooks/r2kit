@@ -43,6 +43,7 @@ import argparse
 import hashlib
 import re
 import json
+import base64
 
 import r2pipe
 
@@ -193,6 +194,170 @@ class ZigHandler:
 
 
 
+class StringSetHandler:
+
+    def __init__(self):
+
+        self.hashes = {}
+        self.temphashes = set()
+    
+    def generate_hashes_from_session(self):
+        
+        self.generate_hashes()
+
+    def generate_hashes_from_input(self, infile, outfile):
+        
+        # Execute based on inputs and output
+        if os.path.isdir(infile) and self.check_outfile(outfile):
+
+            self.generate_hashes_from_dir(infile)
+            self.write_stringsethash_file(outfile)
+        
+        elif os.path.isfile(infile) and self.check_outfile(outfile):
+        
+            self.generate_hashes(infile)
+            self.write_stringsethash_file(outfile)
+        
+        else:
+        
+            print "\nCannot create from input.\n"
+            sys.exit(1)
+
+    def generate_hashes_from_dir(self, directory):
+        
+        for file in self.sorted_alphanumeric(os.listdir(directory)):
+
+            print "Generating string set hashes for " + os.path.join(directory,file)
+            self.generate_hashes(os.path.join(directory,file))
+
+    def generate_hashes(self, infile=None):
+
+        string_sets = {}
+
+        if not infile:
+            infile = ''
+
+        r2 = r2pipe.open(infile) 
+        r2.cmd("aa; aar; aac")
+        strings = r2.cmdj("izzj")
+
+        if strings:
+            for string in strings['strings']:
+                if string['type'] == 'ascii' or string['type'] == 'utf8':
+                    xrefto = r2.cmdj("axtj " + str(string['vaddr']))
+                    if xrefto:
+                        for xref in xrefto:
+
+                            if ('fcn_name' in xref and 
+                                len(base64.b64decode(string['string'])) >= 10):
+
+                                if xref['fcn_name'] in string_sets:
+                                    string_sets[xref['fcn_name']].append(base64.b64decode(string['string']))
+                                elif xref['fcn_name'] not in string_sets:
+                                    string_sets[xref['fcn_name']] = [base64.b64decode(string['string'])]
+
+
+        for func, stringset in string_sets.iteritems():
+
+            stringsethash = hashlib.md5(''.join(stringset)).hexdigest()
+
+            if stringsethash not in self.temphashes:
+
+                self.temphashes.add(stringsethash)
+                self.hashes[self.generate_func_name(func, infile)] = stringsethash
+                #print func, stringsethash
+
+        r2.quit()
+
+    def rename_session_functions(self, infile):
+        
+        if os.path.isdir(infile):
+            
+            for file in self.sorted_alphanumeric(os.listdir(infile)):
+
+                if file.endswith('.stringsethashes'):
+
+                    print "Matching string set hashes for " + os.path.join(infile,file)
+                    self.rename_session_functions_from_stringsethash_file(os.path.join(infile,file))
+
+        elif os.path.isfile(infile) and infile.endswith('.stringsethashes'):
+
+            self.rename_session_functions_from_stringsethash_file(infile)
+
+    def rename_session_functions_from_stringsethash_file(self, infile):
+        
+        r2 = r2pipe.open()
+        
+        with open(infile,'r') as f:
+                file_hashes = json.load(f)
+
+        print 'file hashes are:'
+        for item in file_hashes.values():
+            print '\t' + item
+
+        for funcname, funchash in self.hashes.iteritems():
+
+            print "trying to match " + funcname, funchash
+
+            if funcname.startswith('fcn.') and funchash in set(file_hashes.values()):
+
+                print "\tmatching: ", funcname, funchash
+
+                r2.cmd('s ' + funcname)
+                r2.cmd('afn ' + self.generate_func_name(
+                    self.get_dict_key_from_value(file_hashes, funchash))
+                )
+
+        r2.quit()
+
+    def check_outfile(self, outfile):
+
+        if not outfile:
+            return False
+
+        try:
+            with open(outfile,'w') as outfile:
+                return True
+
+        except IOError:
+            return False
+
+    def write_stringsethash_file(self, outfile):
+
+        if not outfile.endswith('.stringsethashes'):
+            outfile = outfile + '.stringsethashes'
+
+        with open(outfile,'w') as f:
+            json.dump(self.hashes, f)
+
+    def generate_func_name(self, name, infile=None):
+
+        if not infile:
+            return name
+        elif name.startswith('sym.'):
+            return name
+        elif name.startswith('fcn.') or name.startswith('loc.'):
+            return str(os.path.basename(infile)) + '_' + name
+        else:
+            return name
+
+
+    # Taken from:
+    # https://stackoverflow.com/questions/4813061/nonalphanumeric-list-order-from-os-listdir-in-python
+
+    def sorted_alphanumeric(self, data):
+        convert = lambda text: int(text) if text.isdigit() else text.lower()
+        alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
+        return sorted(data, key=alphanum_key)
+
+
+    # Taken from:
+    # https://stackoverflow.com/questions/15784590/how-can-you-print-a-key-given-a-value-in-a-dictionary-for-python/15784656
+
+    def get_dict_key_from_value(self, dict, value):
+        return [k for k,v in dict.iteritems() if v == value][0]
+
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
@@ -214,14 +379,25 @@ if __name__ == '__main__':
 
     if args.generate and args.zigs and args.infile and args.outfile:
 
-        zg = ZigHandler()
-        zg.generate_hashes_from_input(args.infile, args.outfile)
+        zh= ZigHandler()
+        zh.generate_hashes_from_input(args.infile, args.outfile)
 
     elif args.match and args.zigs and args.infile:
         
-        zg = ZigHandler()
-        zg.generate_hashes_from_session()
-        zg.rename_session_functions(args.infile)
+        zh = ZigHandler()
+        zh.generate_hashes_from_session()
+        zh.rename_session_functions(args.infile)
+
+    elif args.generate and args.stringset and args.infile and args.outfile:
+
+        ssh = StringSetHandler()
+        ssh.generate_hashes_from_input(args.infile, args.outfile)
+
+    elif args.match and args.stringset and args.infile:
+
+        ssh = StringSetHandler()
+        ssh.generate_hashes_from_session()
+        ssh.rename_session_functions(args.infile)
 
     else:
 
