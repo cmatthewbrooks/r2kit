@@ -41,11 +41,11 @@ class r2utils:
 
         func_count = r2.cmd('aflc')
 
-        if func_count == 0:
+        if int(func_count) == 0:
             # If there are no functions, analyze the file
             r2.cmd("aa; aar; aac")
 
-        elif func_count > 0:
+        elif int(func_count) > 0:
 
             functions = r2.cmdj("aflj")
 
@@ -68,11 +68,11 @@ class r2utils:
 
         func_count = r2.cmd('aflc')
 
-        if func_count == 0:
+        if int(func_count) == 0:
             # If there are no functions, analyze the file
             r2.cmd("aa; aar; aac")
 
-        elif func_count > 0:
+        elif int(func_count) > 0:
         
             functions = r2.cmdj("aflj")
 
@@ -91,11 +91,11 @@ class r2utils:
 
         func_count = r2.cmd('aflc')
 
-        if func_count == 0:
+        if int(func_count) == 0:
             # If there are no functions, analyze the file
             r2.cmd("aa; aar; aac")
 
-        elif func_count > 0:
+        elif int(func_count) > 0:
 
             functions = r2.cmdj("aflj")
 
@@ -118,11 +118,11 @@ class r2utils:
 
         func_count = r2.cmd('aflc')
 
-        if func_count == 0:
+        if int(func_count) == 0:
             # If there are no functions, analyze the file
             r2.cmd("aa; aar; aac")
 
-        elif func_count > 0:
+        elif int(func_count) > 0:
         
             functions = r2.cmdj("aflj")
 

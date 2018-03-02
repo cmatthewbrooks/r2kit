@@ -255,7 +255,13 @@ class ZigHandler(Handler):
     def generate_hashes(self, infile=None):
         
         r2 = r2pipe.open(infile)
-        r2.cmd('aa; aar; aac')
+        
+        func_count = r2.cmd('aflc')
+
+        if int(func_count) == 0:
+            
+            # If there are no functions, analyze the file
+            r2.cmd("aa; aar; aac")
 
         funcs = r2.cmdj('aflj')
 
@@ -316,7 +322,14 @@ class StringSetHandler(Handler):
             infile = ''
 
         r2 = r2pipe.open(infile) 
-        r2.cmd("aa; aar; aac")
+        func_count = r2.cmd('aflc')
+
+        if int(func_count) == 0:
+            
+            # If there are no functions, analyze the file
+            r2.cmd("aa; aar; aac")
+        
+
         strings = r2.cmdj("izzj")
 
         # First, get the strings and for each string, make sure it is
