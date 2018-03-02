@@ -335,13 +335,23 @@ class r2utils:
 
     def get_import_from_import_jmp_func(self, funcj):
 
+        # Note: the prefix1/2 logic was added after an r2
+        # update. I am unsure why some disasm has the [ bracket
+        # while others do not.
+
         import_string = ''
-        prefix = 'jmp dword ['
+        prefix1 = 'jmp dword ['
+        prefix2 = 'jmp dword '
 
         for op in funcj['ops']:
-            import_string = op.get('opcode','N/A')
 
-        return import_string[len(prefix):len(import_string)-1]
+            import_string = op.get('disasm','N/A')
+
+            if prefix1 in op.get('disasm','N/A'):
+                return import_string[len(prefix1):len(import_string)-1]
+
+            elif prefix2 in op.get('disasm','N/A'):
+                return import_string[len(prefix2):len(import_string)]
 
 
 ####################################################################
