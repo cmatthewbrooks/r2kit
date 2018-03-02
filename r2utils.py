@@ -33,11 +33,11 @@ class r2utils:
 
 ####################################################################
 
-    def get_funcj_list_from_file(self, file):
+    def get_funcj_list(self, file=None):
 
         funcj_list = []
 
-        r2 = r2pipe.open(file) 
+        r2 = r2pipe.open(file)
 
         func_count = r2.cmd('aflc')
 
@@ -45,93 +45,40 @@ class r2utils:
             # If there are no functions, analyze the file
             r2.cmd("aa; aar; aac")
 
-        elif int(func_count) > 0:
+        functions = r2.cmdj("aflj")
 
-            functions = r2.cmdj("aflj")
+        if functions:
 
-            if functions:
+            for func in functions:
 
-                for func in functions:
-
-                    funcj = r2.cmdj("pdfj @ " + hex(f['offset']))
+                funcj = r2.cmdj("pdfj @ " + hex(func['offset']))
+                
+                if funcj:
                     
-                    if funcj:
-                        
-                        funcj_list.append(funcj)
+                    funcj_list.append(funcj)
 
         r2.quit()
         return funcj_list
 
-    def get_aflj_from_file(self, file):
+    def get_aflj(self, file = None):
 
         r2 = r2pipe.open(file) 
 
         func_count = r2.cmd('aflc')
 
         if int(func_count) == 0:
+            
             # If there are no functions, analyze the file
             r2.cmd("aa; aar; aac")
-
-        elif int(func_count) > 0:
         
-            functions = r2.cmdj("aflj")
+        functions = r2.cmdj("aflj")
 
-            if functions:
-                r2.quit()
-                return functions
-            else:
-                r2.quit()
-                return {}
-
-    def get_funcj_list_from_session(self):
-
-        funcj_list = []
-
-        r2 = r2pipe.open(file) 
-
-        func_count = r2.cmd('aflc')
-
-        if int(func_count) == 0:
-            # If there are no functions, analyze the file
-            r2.cmd("aa; aar; aac")
-
-        elif int(func_count) > 0:
-
-            functions = r2.cmdj("aflj")
-
-            if functions:
-                
-                for f in functions:
-
-                    func = r2.cmdj("pdfj @ " + hex(f['offset']))
-
-                    if func:
-                        
-                        funcj_list.append(func)
-
+        if functions:
             r2.quit()
-            return funcj_list
-
-    def get_aflj_from_session(self):
-
-        r2 = r2pipe.open() 
-
-        func_count = r2.cmd('aflc')
-
-        if int(func_count) == 0:
-            # If there are no functions, analyze the file
-            r2.cmd("aa; aar; aac")
-
-        elif int(func_count) > 0:
-        
-            functions = r2.cmdj("aflj")
-
-            if functions:
-                r2.quit()
-                return functions
-            else:
-                r2.quit()
-                return {}
+            return functions
+        else:
+            r2.quit()
+            return {}
 
 
 ####################################################################
@@ -163,20 +110,6 @@ class r2utils:
             return False
 
     def check_is_thunk_func(self, funcj):
-        '''
-        INPUT: An r2 json object returned by the cmd:
-            pdfj @ <offset>
-
-        DESCRIPTION:
-
-        Note - this is theoritical/experimental. The idea is that 
-        functions with fewer than 3 instructions can be skipped 
-        for most function analysis questions. They can be thunk
-        functions or global variable assignments.
-
-        RETURN: True if the function is thunk; False
-        by default.
-        '''
 
         if 1 < len(funcj['ops']) <= 3:
             return True
@@ -184,21 +117,6 @@ class r2utils:
             return False
 
     def check_is_wrapper_func(self, funcj):
-        '''
-        INPUT: An r2 json object returned by the cmd:
-            pdfj @ <offset>
-
-        DESCRIPTION:
-
-        In this implementation, a "wrapper" is a disassembled
-        function designed simply to set up the stack frame
-        before calling another function. Typically, wrappers
-        consist of a single basic block of between 4 and 20
-        instructions with only a single call.
-
-        RETURN: True if the function is a wrapper; False
-        by default.       
-        '''
 
         calls = self.get_call_count_from_funcj(funcj)
 
@@ -211,24 +129,6 @@ class r2utils:
 
 
     def check_is_first_round_func(self, funcj):
-        '''
-        INPUT: An r2 json object returned by the cmd:
-            pdfj @ <offset>
-
-        DESCRIPTION:
-
-        In this implementation, "first round" functions
-        are defined as developer-written functions that 
-        do not contain any call instructions. First-round 
-        functions are easy to start with when naming unknown 
-        functions.
-
-        NOTE: Before calling this function, make sure to
-        weed out libs, thunks, etc using check_is_too_short_func.
-
-        RETURN: True if the function is first-round; False
-        by default.
-        '''
 
         if not self.check_is_analysis_func(funcj):
             return False
@@ -241,22 +141,6 @@ class r2utils:
             return False
 
     def check_is_utility_func(self, funcj):
-        '''
-        INPUT: An r2 json object returned by the cmd:
-            pdfj @ <offset>
-
-        DESCRIPTION:
-
-        In this implementation, "utility" functions are
-        heavily called.
-
-        NOTE: Before calling this function, make sure to
-        weed out libs, thunks, etc using 
-        check_is_analysis_func.
-
-        RETURN: True if the function is utility; False by
-        default.
-        '''
 
         if not self.check_is_analysis_func(funcj):
             return False
