@@ -122,11 +122,10 @@ class YaraRule:
         # Grab the filename over r2pipe.
 
         r2 = r2pipe.open()
-        info = r2.cmd('ij')
+        infoj = r2.cmdj('ij')
         r2.quit()
 
-        if info:
-            infoj = json.loads(info)
+        if infoj:
             return infoj['core']['file']
         
         else:
@@ -141,16 +140,15 @@ class YaraRule:
         comment_instructions = ''
 
         r2 = r2pipe.open()
-        func = r2.cmd('pdfj')
+        funcj = r2.cmdj('pdfj')
         r2.quit()
 
-        if func:
-            funcj = json.loads(func)
+        if funcj:
             
             for op in funcj['ops']:
 
                 # This was hanus to read on one line so I split it up.
-                comment_instructions += '// ' + op['bytes']
+                comment_instructions += '// ' + op.get('bytes','')
                 comment_instructions += ' ' * (16 - len(op['bytes']))
                 comment_instructions +=  op['opcode'] + '\r\n' + ' ' * 8
 
@@ -166,12 +164,10 @@ class YaraRule:
         r2 = r2pipe.open()
         r2.cmd('z-*') #This removes existing signatures to achieve confidence only one exists.
         r2.cmd('zaf')
-        sig = r2.cmd('zj')
+        sigj = r2.cmdj('zj')
         r2.quit()
 
-        if sig:
-            
-            sigj = json.loads(sig)
+        if sigj:
 
             #r2 uses '.' whereas YARA uses '?' for wildcards.
             return sigj[0]['bytes'].replace('.','?')
