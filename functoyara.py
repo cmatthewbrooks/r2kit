@@ -174,7 +174,7 @@ class YaraRule:
         # come from r2's zignatures functionality.
         
         r2 = r2pipe.open()
-        r2.cmd('z-*') #This removes existing signatures to achieve confidence only one exists.
+        r2.cmd('z-*') #This removes existing signatures so only one exists.
         r2.cmd('zaf')
         sigj = r2.cmdj('zj')
         r2.quit()
@@ -235,7 +235,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-n','--name',help='The name for the rule.')
-    parser.add_argument('-a','--author',help='The author string. Note: the constant AUTHOR overrides this arg.')
+    parser.add_argument('-a','--author',
+        help='The author string. Note: the constant AUTHOR overrides this arg.')
 
     args = parser.parse_args()
 
