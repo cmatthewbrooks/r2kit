@@ -4,11 +4,14 @@ Author: Matt Brooks, @cmatthewbrooks
 DESCRIPTION:
 
 The sigs.py script creates Python dicts of func name/hash
-pairs for different types of intake patterns. Currently, the 
-native r2 zignatures can serve as an intake (an experimental
-string set structure is coming soon). These intake patterns 
-are then hashed for smaller storage size and performance 
-gains on matching.
+pairs for different types of intake patterns. Currently supported
+intake patterns include:
+
+ - The r2 native zignature format.
+ - Function reference strings stored in list form.
+
+These intake patterns are then hashed for smaller storage size and
+performance gains on matching.
 
 ARGS:
 
@@ -48,7 +51,13 @@ import base64
 import r2pipe
 
 class Renamer:
+    '''
 
+    The Renamer class is meant to be called from outside this
+    file as a way for the SessionStarter script to easily rename
+    all possible signature types in a directory.
+
+    '''
     def __init__(self):
         pass
 
@@ -87,7 +96,14 @@ class Renamer:
                 ssh.rename_session_functions(infile)
 
 class Handler:
+    '''
 
+    The Handler class is the parent class to handle sig hash
+    generation and matching. All child classes simply need to
+    define an extension for their filetype and implement the
+    generate_hashes method.
+
+    '''
     def __init__(self):
 
         self.hashes = {}
@@ -223,6 +239,13 @@ class Handler:
 
 
 class ZigHandler(Handler):
+    '''
+
+    The ZigHandler class inherits from the Handler class. This child
+    handler generates hashes from byte sequences returned by a native
+    r2 zignature.
+
+    '''
 
     def __init__(self):
 
@@ -272,6 +295,13 @@ class ZigHandler(Handler):
 
 
 class StringSetHandler(Handler):
+    '''
+
+    The StringSetHandler class interits from the Handler class. This child
+    handler generates hashes from lists of strings referenced in a given
+    function.
+
+    '''
 
     def __init__(self):
         
@@ -289,13 +319,19 @@ class StringSetHandler(Handler):
         r2.cmd("aa; aar; aac")
         strings = r2.cmdj("izzj")
 
+        # First, get the strings and for each string, make sure it is
+        # ascii or wide.
         if strings:
             for string in strings['strings']:
                 if string['type'] == 'ascii' or string['type'] == 'utf8':
+
+                    # Next, get the cross references to the string.
                     xrefto = r2.cmdj("axtj " + str(string['vaddr']))
                     if xrefto:
                         for xref in xrefto:
 
+                            # If the xref comes from a function, either add it
+                            # to the list or add a new dictionary item.
                             if ('fcn_name' in xref and 
                                 len(base64.b64decode(string['string'])) >= 10):
 
@@ -312,6 +348,9 @@ class StringSetHandler(Handler):
                                     )
 
 
+        # After generating a dict of function name keys matched to referenced
+        # strings in a list as the value, hash the distinct values and handle
+        # collisions.
         for func, stringset in string_sets.iteritems():
 
             stringsethash = hashlib.md5(''.join(stringset)).hexdigest()
@@ -327,6 +366,8 @@ class StringSetHandler(Handler):
 
 
 if __name__ == '__main__':
+
+    # Do all the arg stuff.
 
     parser = argparse.ArgumentParser()
 
@@ -352,6 +393,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
 
+    # Execute according to args.
 
     if args.generate and args.zigs and args.infile and args.outfile:
 
