@@ -33,6 +33,8 @@ class r2utils:
 
 ####################################################################
 
+    # These methods get different types of overall function lists
+
     def get_funcj_list(self, file=None):
 
         funcj_list = []
@@ -82,6 +84,8 @@ class r2utils:
 
 
 ####################################################################
+
+    # This section is all function checks of various types.
 
     def check_is_import_jmp_func(self, funcj):
 
@@ -147,6 +151,8 @@ class r2utils:
 
 ####################################################################
 
+    # These methods are various small utility methods
+
     def get_call_count_from_funcj(self, funcj):
 
         count = 0
@@ -194,18 +200,6 @@ class r2utils:
 
             elif prefix2 in op.get('disasm','N/A'):
                 return import_string[len(prefix2):len(import_string)]
-
-
-####################################################################
-
-    '''
-    SECTION: tests
-
-    This is the test function for various testing.
-    '''
-
-def test():    
-    pass
 
 
 if __name__ == "__main__":
