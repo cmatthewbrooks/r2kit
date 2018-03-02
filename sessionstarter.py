@@ -23,8 +23,6 @@ NOTES:
 
 TODO:
 
-- Redesign structure so each "rename" function does not open and
-  close a separate pipe.
 
 '''
 

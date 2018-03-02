@@ -60,7 +60,7 @@ class r2utils:
         r2.quit()
         return funcj_list
 
-    def get_aflj(self, file = None):
+    def get_aflj(self, file=None):
 
         r2 = r2pipe.open(file) 
 
@@ -82,12 +82,6 @@ class r2utils:
 
 
 ####################################################################
-
-    '''
-    SECTION: function checks
-
-    This section includes checks for various function types.
-    '''
 
     def check_is_import_jmp_func(self, funcj):
 
@@ -127,11 +121,7 @@ class r2utils:
         else:
             return False
 
-
     def check_is_first_round_func(self, funcj):
-
-        if not self.check_is_analysis_func(funcj):
-            return False
 
         calls = self.get_call_count_from_funcj(funcj)
 
@@ -141,9 +131,6 @@ class r2utils:
             return False
 
     def check_is_utility_func(self, funcj):
-
-        if not self.check_is_analysis_func(funcj):
-            return False
         
         call_xref_count = 0
 
@@ -158,36 +145,7 @@ class r2utils:
         elif call_xref_count <= 2:
             return False
 
-    def check_is_analysis_func(self, funcj):
-        '''
-        INPUT: An r2 json object returned by the cmd:
-            pdfj @ <offset>
-
-        DESCRIPTION:
-
-
-        RETURN: True if the function is worth analying;
-        False if the function is basic.
-        '''
-
-        if self.check_is_import_jmp_func(funcj):
-            return False
-        elif self.check_is_thunk_func(funcj):
-            return False
-        elif self.check_is_wrapper_func(funcj):
-            return False
-        else:
-            return True
-
-
-
 ####################################################################
-
-    '''
-    SECTION: utilities
-
-    These are small reusable functions with multiple use cases.
-    '''
 
     def get_call_count_from_funcj(self, funcj):
 
