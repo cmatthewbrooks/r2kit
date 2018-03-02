@@ -61,8 +61,20 @@ class YaraRule:
     def create(self,name,author):
         # This is the externally-facing func to be called from
         # outside the class.
-        rule = self.create_rule(name,author)
-        print rule
+
+        r2 = r2pipe.open() 
+
+        func_count = r2.cmd('aflc')
+
+        if int(func_count) == 0:
+ 
+            # If there are no functions, analyze the file
+            print('There are 0 functions. Please analyze the file.')
+
+        elif int(func_count) > 0:
+ 
+            rule = self.create_rule(name,author)
+            print rule
 
     ##########################################################
 
