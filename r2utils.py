@@ -38,18 +38,26 @@ class r2utils:
         funcj_list = []
 
         r2 = r2pipe.open(file) 
-        r2.cmd("aa; aar; aac")
-        functions = r2.cmd("aflj")
 
-        if functions:
-            functionsj = json.loads(functions)
-            for f in functionsj:
+        func_count = r2.cmd('aflc')
 
-                func = r2.cmd("pdfj @ " + hex(f['offset']))
-                if func:
+        if func_count == 0:
+            # If there are no functions, analyze the file
+            r2.cmd("aa; aar; aac")
+
+        elif func_count > 0:
+
+            functions = r2.cmdj("aflj")
+
+            if functions:
+
+                for func in functions:
+
+                    funcj = r2.cmdj("pdfj @ " + hex(f['offset']))
                     
-                    funcj = json.loads(func)
-                    funcj_list.append(funcj)
+                    if funcj:
+                        
+                        funcj_list.append(funcj)
 
         r2.quit()
         return funcj_list
@@ -57,49 +65,73 @@ class r2utils:
     def get_aflj_from_file(self, file):
 
         r2 = r2pipe.open(file) 
-        r2.cmd("aa; aar; aac")
-        functions = r2.cmd("aflj")
 
-        if functions:
-            r2.quit()
-            return json.loads(functions)
-        else:
-            r2.quit()
-            return {}
+        func_count = r2.cmd('aflc')
+
+        if func_count == 0:
+            # If there are no functions, analyze the file
+            r2.cmd("aa; aar; aac")
+
+        elif func_count > 0:
+        
+            functions = r2.cmdj("aflj")
+
+            if functions:
+                r2.quit()
+                return functions
+            else:
+                r2.quit()
+                return {}
 
     def get_funcj_list_from_session(self):
 
         funcj_list = []
 
-        r2 = r2pipe.open() 
-        r2.cmd("aa; aar; aac")
-        functions = r2.cmd("aflj")
+        r2 = r2pipe.open(file) 
 
-        if functions:
-            functionsj = json.loads(functions)
-            for f in functionsj:
+        func_count = r2.cmd('aflc')
 
-                func = r2.cmd("pdfj @ " + hex(f['offset']))
-                if func:
-                    
-                    funcj = json.loads(func)
-                    funcj_list.append(funcj)
+        if func_count == 0:
+            # If there are no functions, analyze the file
+            r2.cmd("aa; aar; aac")
 
-        r2.quit()
-        return funcj_list
+        elif func_count > 0:
+
+            functions = r2.cmdj("aflj")
+
+            if functions:
+                
+                for f in functions:
+
+                    func = r2.cmdj("pdfj @ " + hex(f['offset']))
+
+                    if func:
+                        
+                        funcj_list.append(func)
+
+            r2.quit()
+            return funcj_list
 
     def get_aflj_from_session(self):
 
         r2 = r2pipe.open() 
-        r2.cmd("aa; aar; aac")
-        functions = r2.cmd("aflj")
 
-        if functions:
-            r2.quit()
-            return json.loads(functions)
-        else:
-            r2.quit()
-            return {}
+        func_count = r2.cmd('aflc')
+
+        if func_count == 0:
+            # If there are no functions, analyze the file
+            r2.cmd("aa; aar; aac")
+
+        elif func_count > 0:
+        
+            functions = r2.cmdj("aflj")
+
+            if functions:
+                r2.quit()
+                return functions
+            else:
+                r2.quit()
+                return {}
 
 
 ####################################################################
