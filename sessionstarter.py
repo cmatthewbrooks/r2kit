@@ -68,7 +68,7 @@ class SessionStarter:
         r2 = r2pipe.open() 
         r2utils = R2utils.r2utils()
 
-        funcj_list = r2utils.get_funcj_list_from_session()
+        funcj_list = r2utils.get_funcj_list()
 
         for funcj in funcj_list:
 

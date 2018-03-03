@@ -1,6 +1,10 @@
 
 # Library Information
 
+## Status
+
+Currently, there are only library signature hashes for the Visual C Compiler. Please submit issues or pull requests for additional signature hash files.
+
 ## Visual C/C++ Library Notes
 
 The earliest Visual Studio library code for which signatures have been created in this repository is VC 6.0. Historical information for Visual C/C++ can be found at these references:
@@ -21,6 +25,8 @@ Using [this](https://support.microsoft.com/en-sg/help/259403/how-to-obtain-the-v
 * Msvcrt.dll - Visual C Runtime Library
 * Oleaut32.dll - Used for ActiveX controls; no longer included in Visual C++
 * Olepro32.dll - Used for ActiveX controls; no longer included in Visual C++
+
+Some of the above files were merged or otherwise eliminated in future versions of Visual Studio.
 
 The Universal CRT was introduced in Visual Studio 2015. See these links for recent changes to the CRT:
 
