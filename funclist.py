@@ -75,7 +75,8 @@ class FuncList:
 
         for funcj in funcj_list:
 
-            if r2utils.check_is_first_round_func(funcj):
+            if (funcj['name'].startswith('fcn.') and 
+                r2utils.check_is_first_round_func(funcj)):
                 first_round_funcs.append(funcj['name'])
         
         return first_round_funcs
@@ -89,7 +90,8 @@ class FuncList:
 
         for funcj in funcj_list:
 
-            if r2utils.check_is_utility_func(funcj):
+            if (funcj['name'].startswith('fcn.') and 
+                r2utils.check_is_utility_func(funcj)):
                 utility_funcs.append(funcj['name'])
 
         return utility_funcs
