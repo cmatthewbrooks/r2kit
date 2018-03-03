@@ -62,18 +62,18 @@ To show an example highlighting this method's accuracy, consider two malware sam
 
 We can first view the file's linked libraries and note the linking to msvcr80.dll:
 
-![file2libraries](docs/img/file2_linkedlibraries.png)
+![file2libraries](img/file2_linkedlibraries.png)
 
 Then after matching, we can observe the statically linked code is all renamed to the same version of Microsoft Visual C:
 
-![file2funcs](docs/img/file2_funcnames.png)
+![file2funcs](img/file2_funcnames.png)
 
 Looking at the newer file, we can observe the linking to msvcr110.dll:
 
-![file1libraries](docs/img/file1_linkedlibraries.png)
+![file1libraries](img/file1_linkedlibraries.png)
 
 Then after matching, we can observe the statically linked code is all renamed to the newer version of Microsoft Visual C:
 
-![file1funcs](docs/img/file1_funcnames.png)
+![file1funcs](img/file1_funcnames.png)
 
 Since this method of generation/matching makes use of DLLs, only the DLL's exported functions will have names. The rest will be identified as library code with a generic naming structure. In many if not most cases, the generically named library functions are only called by other library functions and the named exports will be the functions called by developer-written functions.
