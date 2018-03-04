@@ -31,21 +31,34 @@ class r2utils:
     def __init__(self):
         pass
 
+
+
+    def get_analyzed_r2pipe_from_input(self, input_obj = None):
+
+        if input_obj.__class__ == 'r2pipe.open':
+            r2 = input_obj
+        elif os.path.isfile(input_obj):
+            r2 = r2pipe.open(input_obj)
+        elif not input_obj:
+            r2 = r2pipe.open()
+        else:
+            return None
+
+
+        if int(r2.cmd('aflc')) == 0:
+            # If there are no functions, analyze the file
+            r2.cmd("aa; aar; aac")
+
+        return r2
+
+
 ####################################################################
 
     # These methods get different types of overall function lists
 
-    def get_funcj_list(self, file=None):
+    def get_funcj_list(self, r2):
 
         funcj_list = []
-
-        r2 = r2pipe.open(file)
-
-        func_count = r2.cmd('aflc')
-
-        if int(func_count) == 0:
-            # If there are no functions, analyze the file
-            r2.cmd("aa; aar; aac")
 
         functions = r2.cmdj("aflj")
 
@@ -59,27 +72,15 @@ class r2utils:
                     
                     funcj_list.append(funcj)
 
-        r2.quit()
         return funcj_list
 
-    def get_aflj(self, file=None):
-
-        r2 = r2pipe.open(file) 
-
-        func_count = r2.cmd('aflc')
-
-        if int(func_count) == 0:
-            
-            # If there are no functions, analyze the file
-            r2.cmd("aa; aar; aac")
+    def get_aflj(self, r2):
         
         functions = r2.cmdj("aflj")
 
         if functions:
-            r2.quit()
             return functions
         else:
-            r2.quit()
             return {}
 
 
