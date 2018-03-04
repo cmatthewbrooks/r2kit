@@ -1,8 +1,6 @@
 '''
 Author: Matt Brooks, @cmatthewbrooks
 
-
-
 DESCRIPTION:
 
 The r2utils class is a class of various functions to be used
@@ -10,14 +8,6 @@ while coding against the radare2 r2pipes.
 
 NOTES:
 
-If you're reading this class file, you may find the following points
-of information helpful:
-
-- For the initial r2pipe analysis command, others may prefer the
-  standard 'aaa' for analysis. The final step of that analysis is
-  an automatic renaming I didn't enjoy. The 'aa; aac; aar' chain
-  used throughout this file is all of the 'aaa' analysis sans the
-  renaming.
 
 '''
 
