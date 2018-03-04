@@ -32,7 +32,6 @@ class r2utils:
         pass
 
 
-
     def get_analyzed_r2pipe_from_input(self, input_obj = None):
 
         if not input_obj:
@@ -58,6 +57,9 @@ class r2utils:
 
     def get_funcj_list(self, r2):
 
+        if not r2.__class__ == 'r2pipe.open':
+            return []
+
         funcj_list = []
 
         functions = r2.cmdj("aflj")
@@ -75,6 +77,9 @@ class r2utils:
         return funcj_list
 
     def get_aflj(self, r2):
+
+        if not r2.__class__ == 'r2pipe.open':
+            return {}
         
         functions = r2.cmdj("aflj")
 
