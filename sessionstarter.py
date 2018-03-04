@@ -33,42 +33,46 @@ import json
 import r2pipe 
 import r2utils as R2utils
 
-from sigs import Renamer
-
 class SessionStarter:
 
-    def __init__(self):
+    def __init__(self, input_obj = None):
 
-        r2 = r2pipe.open()
-        
-        func_count = r2.cmd('aflc')
+        # If the input is an r2pipe.open object, then state is
+        # being passed and must be returned.
 
-        if int(func_count) == 0:
-            # If there are no functions, analyze the file
-            r2.cmd("aa; aar; aac")
+        # If the input is a file, then state should still be returned.
+
+        # If there is no input, state is being handled in-session.
+
+        return_pipe = None
+
+        if not input_obj:
+            return_pipe = False
+        elif input_obj.__class__ == 'r2pipe.open':
+            return_pipe = True
+        elif os.path.isfile(input_obj):
+            return_pipe = True
+        else:
+            print '\nNot a valid input type for SessionStarter\n'
+            sys.exit(1)
+
+
+        r2utils = R2utils.r2utils()
+        r2 = r2utils.get_analyzed_r2pipe_from_input(input_obj)
+        funcj_list = r2utils.get_funcj_list(r2)
+
+        self.rename_common_funcs(r2, funcj_list)
+
+        if return_pipe:
+            return r2
+        else:
+            return None
 
         r2.quit()
 
-    # The start_session method is the only method meant to be
-    # called outside the class.
+    def rename_common_funcs(self, r2, funcj_list):
 
-    def start_session(self, infile=None):
-
-        if not infile:
-            infile = ''
-
-        lib_renamer = Renamer()
-        lib_renamer.rename_recognized_code(infile)
-
-        self.rename_common_funcs()
-
-
-    def rename_common_funcs(self):
-
-        r2 = r2pipe.open() 
         r2utils = R2utils.r2utils()
-
-        funcj_list = r2utils.get_funcj_list()
 
         for funcj in funcj_list:
 
@@ -91,28 +95,6 @@ class SessionStarter:
                 r2.cmd('s ' + str(funcj['addr']))
                 r2.cmd('afn globalassign_' + funcj['name'].replace('.',''))
 
-
-        r2.quit()
-
-
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-i','--infile', 
-        help = 'Input for matching. Can be a file or directory.')
-    args = parser.parse_args()
-
-    if args.infile and not os.path.exists(args.infile):
-
-        print args.infile + ' is not a valid input for signature matching.'
-        sys.exit(1)
-    
-    elif args.infile and os.path.exists(args.infile):
-    
-        ss = SessionStarter()
-        ss.start_session(args.infile)
-    
-    elif not args.infile:
-    
-        ss = SessionStarter()
-        ss.start_session()
+    ss = SessionStarter()

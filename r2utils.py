@@ -35,12 +35,12 @@ class r2utils:
 
     def get_analyzed_r2pipe_from_input(self, input_obj = None):
 
-        if input_obj.__class__ == 'r2pipe.open':
+        if not input_obj:
+            r2 = r2pipe.open()
+        elif input_obj.__class__ == 'r2pipe.open':
             r2 = input_obj
         elif os.path.isfile(input_obj):
-            r2 = r2pipe.open(input_obj)
-        elif not input_obj:
-            r2 = r2pipe.open()
+            r2 = r2pipe.open(input_obj)          
         else:
             return None
 
