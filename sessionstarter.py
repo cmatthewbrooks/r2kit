@@ -36,65 +36,62 @@ import r2utils as R2utils
 class SessionStarter:
 
     def __init__(self, input_obj = None):
+        
+        self.r2utils = R2utils.r2utils()
+        self.r2 = self.r2utils.get_analyzed_r2pipe_from_input(input_obj)
+        
+        self.sigs_location = None
+        self.sigs_location_type = None
 
-        # If the input is an r2pipe.open object, then state is
-        # being passed and must be returned.
+    def set_sigs_location(self, infile):
 
-        # If the input is a file, then state should still be returned.
+        if os.path.isdir(infile):
 
-        # If there is no input, state is being handled in-session.
+            self.sigs_location = infile
+            self.sigs_location_type = 'directory'
 
-        return_pipe = None
+        elif os.path.isfile(infile):
+            
+            self.sigs_location = infile
+            self.sigs_location_type = 'file'
 
-        if not input_obj:
-            return_pipe = False
-        elif input_obj.__class__ == 'r2pipe.open':
-            return_pipe = True
-        elif os.path.isfile(input_obj):
-            return_pipe = True
-        else:
-            print '\nNot a valid input type for SessionStarter\n'
-            sys.exit(1)
-
-
-        r2utils = R2utils.r2utils()
-        r2 = r2utils.get_analyzed_r2pipe_from_input(input_obj)
-        funcj_list = r2utils.get_funcj_list(r2)
-
-        self.rename_common_funcs(r2, funcj_list)
-
-        if return_pipe:
-            return r2
-        else:
+    def rename_library_code(self):
+        
+        if not self.sigs_location:
             return None
 
-        r2.quit()
+    def rename_common_funcs(self):
 
-    def rename_common_funcs(self, r2, funcj_list):
-
-        r2utils = R2utils.r2utils()
+        funcj_list = self.r2utils.get_funcj_list(self.r2)
 
         for funcj in funcj_list:
 
-            if r2utils.check_is_import_jmp_func(funcj):
+            if (self.r2utils.check_is_import_jmp_func(funcj) 
+                and funcj['name'].startswith('fcn.')):
 
-                r2.cmd('s ' + str(funcj['addr']))
-                r2.cmd('afn jmp_' + 
-                    r2utils.get_import_from_import_jmp_func(funcj)
+                self.r2.cmd('s ' + str(funcj['addr']))
+                self.r2.cmd('afn jmp_' + 
+                    self.r2utils.get_import_from_import_jmp_func(funcj)
                 )
 
-            elif r2utils.check_is_wrapper_func(funcj):
+            elif (self.r2utils.check_is_wrapper_func(funcj) 
+                and funcj['name'].startswith('fcn.')):
 
-                r2.cmd('s ' + str(funcj['addr']))
-                r2.cmd('afn wrapper_' + 
-                    (r2utils.get_call_from_wrapper(funcj)).replace(' ','_')
+                self.r2.cmd('s ' + str(funcj['addr']))
+                self.r2.cmd('afn wrapper_' + 
+                    self.r2utils.get_call_from_wrapper(funcj).replace(' ','_')
                 )
 
-            elif r2utils.check_is_global_assignment_func(funcj):
+            elif (self.r2utils.check_is_global_assignment_func(funcj) 
+                and funcj['name'].startswith('fcn.')):
 
-                r2.cmd('s ' + str(funcj['addr']))
-                r2.cmd('afn globalassign_' + funcj['name'].replace('.',''))
+                self.r2.cmd('s ' + str(funcj['addr']))
+                self.r2.cmd(
+                    'afn globalassign_' + funcj['name'].replace('.','')
+                )
 
 if __name__ == '__main__':
 
     ss = SessionStarter()
+    ss.rename_library_code()
+    ss.rename_common_funcs()

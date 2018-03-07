@@ -47,7 +47,7 @@ class r2utils:
 
     def get_funcj_list(self, r2):
 
-        if not r2.__class__ == 'r2pipe.open':
+        if not str(r2.__class__) == 'r2pipe.open':
             return []
 
         funcj_list = []
