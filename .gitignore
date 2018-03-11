@@ -1,6 +1,7 @@
 # Compiled source #
 ###################
 *.pyc
+__init__.py
 
 # Application generated files #
 ###############################
