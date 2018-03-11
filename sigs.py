@@ -50,16 +50,20 @@ import base64
 
 import r2pipe
 
-class Renamer:
+class StaticLibRenamer:
     '''
 
-    The Renamer class is meant to be called from outside this
+    This class is meant to be called from outside this
     file as a way for the SessionStarter script to easily rename
     all possible signature types in a directory.
 
     '''
     def __init__(self):
-        pass
+        
+        supported_sigs = {
+            ".zighashes": "ZigHandler",
+            ".stringsethashes": "StringSetHandler"
+        }
 
     def rename_recognized_code(self, infile):
 
