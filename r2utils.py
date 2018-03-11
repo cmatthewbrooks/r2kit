@@ -38,6 +38,7 @@ class r2utils:
             # If there are no functions, analyze the file
             r2.cmd("aa; aar; aac")
 
+
         return r2
 
 
