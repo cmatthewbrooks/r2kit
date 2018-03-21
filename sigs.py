@@ -49,6 +49,7 @@ import json
 import base64
 
 import r2pipe
+import r2utils as R2utils
 
 class Handler(object):
     '''
@@ -75,31 +76,31 @@ class Handler(object):
 
         return extension_handlers
 
-    def rename_from_infile(self, infile):
+    def rename_from_location(self, location):
 
-        if os.path.isdir(infile):
+        if os.path.isdir(location):
             
-            for file in os.listdir(infile):
+            for file in os.listdir(location):
 
                 extension = os.path.splitext(file)[1].lower()
                 print extension, file
-                self.rename(extension, os.path.join(infile, file))
+                self.rename(extension, os.path.join(location, file))
 
 
-        elif os.path.isfile(infile):
+        elif os.path.isfile(location):
 
-                extension = os.path.splitext(infile)[1].lower()
-                self.rename(extension, infile)
+                extension = os.path.splitext(location)[1].lower()
+                self.rename(extension, location)
 
-    def rename(self, extension, infile):
+    def rename(self, extension, location):
 
-        print extension, infile
+        print extension, location
 
         if extension in self.extension_handlers:
 
             cls = self.extension_handlers[extension]()
             cls.generate_hashes_from_session()
-            cls.rename_session_functions(infile)
+            cls.rename_session_functions(location)
 
     def generate_hashes(self):
         
@@ -110,16 +111,16 @@ class Handler(object):
 
         self.generate_hashes()
 
-    def generate_hashes_from_input(self, infile, outfile):
+    def generate_hashes_from_input(self, location, outfile):
 
-        if os.path.isdir(infile) and self.check_outfile(outfile):
+        if os.path.isdir(location) and self.check_outfile(outfile):
 
-            self.generate_hashes_from_dir(infile)
+            self.generate_hashes_from_dir(location)
             self.write_hash_file(outfile)
         
-        elif os.path.isfile(infile) and self.check_outfile(outfile):
+        elif os.path.isfile(location) and self.check_outfile(outfile):
         
-            self.generate_hashes(infile)
+            self.generate_hashes(location)
             self.write_hash_file(outfile)
         
         else:
@@ -134,27 +135,27 @@ class Handler(object):
             print "Generating hashes for " + os.path.join(directory, file)
             self.generate_hashes(os.path.join(directory, file))
 
-    def rename_session_functions(self, infile):
+    def rename_session_functions(self, location):
         
-        if os.path.isdir(infile):
+        if os.path.isdir(location):
             
-            for file in self.sorted_alphanumeric(os.listdir(infile)):
+            for file in self.sorted_alphanumeric(os.listdir(location)):
 
                 if file.endswith(self.EXTENSION):
 
                     self.rename_session_functions_from_hash_file(
-                        os.path.join(infile,file)
+                        os.path.join(location,file)
                     )
 
-        elif os.path.isfile(infile) and infile.endswith(self.EXTENSION):
+        elif os.path.isfile(location) and location.endswith(self.EXTENSION):
 
-            self.rename_session_functions_from_hash_file(infile)
+            self.rename_session_functions_from_hash_file(location)
 
-    def rename_session_functions_from_hash_file(self, infile):
+    def rename_session_functions_from_hash_file(self, location):
         
         r2 = r2pipe.open()
         
-        with open(infile,'r') as f:
+        with open(location,'r') as f:
                 file_hashes = json.load(f)
 
         for funcname, funchash in self.hashes.iteritems():
@@ -200,14 +201,14 @@ class Handler(object):
         except IOError:
             return False
 
-    def generate_func_name(self, name, infile=None):
+    def generate_func_name(self, name, location=None):
 
-        if not infile:
+        if not location:
             return name
         elif name.startswith('sym.'):
             return name
         elif name.startswith('fcn.') or name.startswith('loc.'):
-            return str(os.path.basename(infile)) + '_' + name
+            return str(os.path.basename(location)) + '_' + name
         else:
             return name
 
@@ -217,7 +218,11 @@ class Handler(object):
 
     def sorted_alphanumeric(self, data):
         convert = lambda text: int(text) if text.isdigit() else text.lower()
-        alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
+
+        alphanum_key = lambda key: [ 
+            convert(c) for c in re.split('([0-9]+)', key) 
+        ]
+
         return sorted(data, key=alphanum_key)
 
     # Taken from:
@@ -242,12 +247,12 @@ class ZigHandler(Handler):
     def __init__(self):
 
         Handler.__init__(self)
-        self.EXTENSION = '.zighashes'
+        self.EXTENSION = ZigHandler.extension
         
 
-    def generate_hashes(self, infile=None):
+    def generate_hashes(self, location=None):
         
-        r2 = r2pipe.open(infile)
+        r2 = r2pipe.open(location)
         
         func_count = r2.cmd('aflc')
 
@@ -262,7 +267,7 @@ class ZigHandler(Handler):
 
             # Generate the full zignature.
             r2.cmd('zaf ' + func['name'] + ' ' + self.generate_func_name(
-                func['name'],infile)
+                func['name'],location)
             )
 
             # View the zignature, get the bytes, and hash them.
@@ -278,7 +283,7 @@ class ZigHandler(Handler):
             if len(zig_bytes) > 30 and sig_byte_hash not in self.temphashes:
 
                 # Add the func+hash pair to the dict
-                self.hashes[self.generate_func_name(func['name'],infile)] = (
+                self.hashes[self.generate_func_name(func['name'],location)] = (
                     sig_byte_hash
                 )
 
@@ -307,17 +312,17 @@ class StringSetHandler(Handler):
     def __init__(self):
         
         Handler.__init__(self)
-        self.EXTENSION = '.stringsethashes'
+        self.EXTENSION = StringSetHandler.extension
 
 
-    def generate_hashes(self, infile=None):
+    def generate_hashes(self, location=None):
 
         string_sets = {}
 
-        if not infile:
-            infile = ''
+        if not location:
+            location = ''
 
-        r2 = r2pipe.open(infile) 
+        r2 = r2pipe.open(location) 
         func_count = r2.cmd('aflc')
 
         if int(func_count) == 0:
@@ -367,7 +372,7 @@ class StringSetHandler(Handler):
             if stringsethash not in self.temphashes:
 
                 self.temphashes.add(stringsethash)
-                self.hashes[self.generate_func_name(func, infile)] = (
+                self.hashes[self.generate_func_name(func, location)] = (
                     stringsethash
                 )
 
@@ -394,8 +399,8 @@ if __name__ == '__main__':
     sigtype.add_argument('-ss','--stringset', 
         action='store_true',help='Operate using string set matching.')
 
-    parser.add_argument('-i','--infile', 
-        help = 'Input for generation or matching. Can be a file or directory.')
+    parser.add_argument('-l','--location', 
+        help = 'Location for generation or matching. Can be a file or directory.')
     parser.add_argument('-o','--outfile',
         help = 'An output file for generate mode when generating new signatures.')
 
@@ -404,27 +409,27 @@ if __name__ == '__main__':
 
     # Execute according to args.
 
-    if args.generate and args.zigs and args.infile and args.outfile:
+    if args.generate and args.zigs and args.location and args.outfile:
 
         zh = ZigHandler()
-        zh.generate_hashes_from_input(args.infile, args.outfile)
+        zh.generate_hashes_from_input(args.location, args.outfile)
 
-    elif args.match and args.zigs and args.infile:
+    elif args.match and args.zigs and args.location:
         
         zh = ZigHandler()
         zh.generate_hashes_from_session()
-        zh.rename_session_functions(args.infile)
+        zh.rename_session_functions(args.location)
 
-    elif args.generate and args.stringset and args.infile and args.outfile:
+    elif args.generate and args.stringset and args.location and args.outfile:
 
         ssh = StringSetHandler()
-        ssh.generate_hashes_from_input(args.infile, args.outfile)
+        ssh.generate_hashes_from_input(args.location, args.outfile)
 
-    elif args.match and args.stringset and args.infile:
+    elif args.match and args.stringset and args.location:
 
         ssh = StringSetHandler()
         ssh.generate_hashes_from_session()
-        ssh.rename_session_functions(args.infile)
+        ssh.rename_session_functions(args.location)
 
     else:
 

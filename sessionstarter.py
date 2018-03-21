@@ -77,22 +77,22 @@ class SessionStarter:
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i','--infile', 
-        help = 'Input for matching. Can be a file or directory.')
+    parser.add_argument('-l','--location', 
+        help = 'Location of signatures for matching. Can be a file or directory.')
     args = parser.parse_args()
 
-    if args.infile and not os.path.exists(args.infile):
+    if args.location and not os.path.exists(args.location):
 
-        print args.infile + ' is not a valid input for signature matching.'
+        print args.location + ' is not a valid location for signature matching.'
         sys.exit(1)
     
-    elif args.infile and os.path.exists(args.infile):
+    elif args.location and os.path.exists(args.location):
     
         ss = SessionStarter()
-        ss.rename_library_code(args.infile)
+        ss.rename_library_code(args.location)
         ss.rename_common_funcs()
     
-    elif not args.infile:
+    elif not args.location:
     
         ss = SessionStarter()
         ss.rename_common_funcs()
