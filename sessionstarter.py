@@ -28,32 +28,21 @@ import json
 import r2pipe 
 import r2utils as R2utils
 
+from sigs import Handler
+
 class SessionStarter:
 
     def __init__(self, input_obj = None):
         
         self.r2utils = R2utils.r2utils()
         self.r2 = self.r2utils.get_analyzed_r2pipe_from_input(input_obj)
-        
-        self.sigs_location = None
-        self.sigs_location_type = None
 
-    def set_sigs_location(self, infile):
+    def rename_library_code(self, infile):
 
-        if os.path.isdir(infile):
-
-            self.sigs_location = infile
-            self.sigs_location_type = 'directory'
-
-        elif os.path.isfile(infile):
-            
-            self.sigs_location = infile
-            self.sigs_location_type = 'file'
-
-    def rename_library_code(self):
-        
-        if not self.sigs_location:
-            return None
+        # imported from sigs.py
+        h = Handler()
+        h.initialize_handlers()
+        h.rename_from_infile(infile)
 
     def rename_common_funcs(self):
 
@@ -87,7 +76,23 @@ class SessionStarter:
 
 if __name__ == '__main__':
 
-    ss = SessionStarter()
-    ss.set_sigs_location("TODO")
-    ss.rename_library_code()
-    ss.rename_common_funcs()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-i','--infile', 
+        help = 'Input for matching. Can be a file or directory.')
+    args = parser.parse_args()
+
+    if args.infile and not os.path.exists(args.infile):
+
+        print args.infile + ' is not a valid input for signature matching.'
+        sys.exit(1)
+    
+    elif args.infile and os.path.exists(args.infile):
+    
+        ss = SessionStarter()
+        ss.rename_library_code(args.infile)
+        ss.rename_common_funcs()
+    
+    elif not args.infile:
+    
+        ss = SessionStarter()
+        ss.rename_common_funcs()

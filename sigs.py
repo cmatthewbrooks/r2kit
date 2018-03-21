@@ -50,56 +50,7 @@ import base64
 
 import r2pipe
 
-class StaticLibRenamer:
-    '''
-
-    This class is meant to be called from outside this
-    file as a way for the SessionStarter script to easily rename
-    all possible signature types in a directory.
-
-    '''
-    def __init__(self):
-        
-        supported_sigs = {
-            ".zighashes": "ZigHandler",
-            ".stringsethashes": "StringSetHandler"
-        }
-
-    def rename_recognized_code(self, infile):
-
-        # TODO: Implement dynamic instantiation based on file extension
-
-        if os.path.isdir(infile):
-            
-            for file in os.listdir(infile):
-                
-                if file.endswith('.zighashes'):
-
-                    zh = ZigHandler()
-                    zh.generate_hashes_from_session()
-                    zh.rename_session_functions(os.path.join(infile, file))
-
-                elif file.endswith('.stringsethashes'):
-
-                    ssh = StringSetHandler()
-                    ssh.generate_hashes_from_session()
-                    ssh.rename_session_functions(os.path.join(infile, file))
-
-        elif os.path.isfile(infile):
-            
-            if infile.endswith('.zighashes'):
-
-                zh = ZigHandler()
-                zh.generate_hashes_from_session()
-                zh.rename_session_functions(infile)
-
-            elif infile.endswith('.stringsethashes'):
-
-                ssh = StringSetHandler()
-                ssh.generate_hashes_from_session()
-                ssh.rename_session_functions(infile)
-
-class Handler:
+class Handler(object):
     '''
 
     The Handler class is the parent class to handle sig hash
@@ -112,8 +63,43 @@ class Handler:
 
         self.hashes = {}
         self.temphashes = set()
+        self.extension_handlers = self.initialize_handlers()
 
-        self.EXTENSION = ''
+    @staticmethod
+    def initialize_handlers():
+        
+        extension_handlers = dict()
+
+        for cls in Handler.__subclasses__():
+            extension_handlers[cls.extension] = cls
+
+        return extension_handlers
+
+    def rename_from_infile(self, infile):
+
+        if os.path.isdir(infile):
+            
+            for file in os.listdir(infile):
+
+                extension = os.path.splitext(file)[1].lower()
+                print extension, file
+                self.rename(extension, os.path.join(infile, file))
+
+
+        elif os.path.isfile(infile):
+
+                extension = os.path.splitext(infile)[1].lower()
+                self.rename(extension, infile)
+
+    def rename(self, extension, infile):
+
+        print extension, infile
+
+        if extension in self.extension_handlers:
+
+            cls = self.extension_handlers[extension]()
+            cls.generate_hashes_from_session()
+            cls.rename_session_functions(infile)
 
     def generate_hashes(self):
         
@@ -251,10 +237,13 @@ class ZigHandler(Handler):
 
     '''
 
+    extension = '.zighashes'
+
     def __init__(self):
 
         Handler.__init__(self)
         self.EXTENSION = '.zighashes'
+        
 
     def generate_hashes(self, infile=None):
         
@@ -313,10 +302,13 @@ class StringSetHandler(Handler):
 
     '''
 
+    extension = '.stringsethashes'
+
     def __init__(self):
         
         Handler.__init__(self)
         self.EXTENSION = '.stringsethashes'
+
 
     def generate_hashes(self, infile=None):
 
