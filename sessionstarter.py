@@ -26,23 +26,23 @@ import argparse
 import json
 
 import r2pipe 
-import r2utils as R2utils
 
-from sigs import Handler
+import r2utils
+import sigs
 
 class SessionStarter:
 
     def __init__(self, input_obj = None):
         
-        self.r2utils = R2utils.r2utils()
+        self.r2utils = r2utils.R2Utils()
         self.r2 = self.r2utils.get_analyzed_r2pipe_from_input(input_obj)
 
-    def rename_library_code(self, infile):
+    def rename_library_code(self, location):
 
         # imported from sigs.py
-        h = Handler()
+        h = sigs.Handler()
         h.initialize_handlers()
-        h.rename_from_infile(infile)
+        h.rename_from_location(location)
 
     def rename_common_funcs(self):
 
@@ -81,6 +81,8 @@ if __name__ == '__main__':
         help = 'Location of signatures for matching. Can be a file or directory.')
     args = parser.parse_args()
 
+    r2 = r2pipe.open()
+
     if args.location and not os.path.exists(args.location):
 
         print args.location + ' is not a valid location for signature matching.'
@@ -88,11 +90,13 @@ if __name__ == '__main__':
     
     elif args.location and os.path.exists(args.location):
     
-        ss = SessionStarter()
+        ss = SessionStarter(r2)
         ss.rename_library_code(args.location)
         ss.rename_common_funcs()
     
     elif not args.location:
     
-        ss = SessionStarter()
+        ss = SessionStarter(r2)
         ss.rename_common_funcs()
+
+    r2.quit()
