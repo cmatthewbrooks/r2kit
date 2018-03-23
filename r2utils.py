@@ -26,7 +26,7 @@ class r2utils:
 
         if not input_obj:
             r2 = r2pipe.open()
-        elif input_obj.__class__ == 'r2pipe.open':
+        elif str(input_obj.__class__) == 'r2pipe.open':
             r2 = input_obj
         elif os.path.isfile(input_obj):
             r2 = r2pipe.open(input_obj)          
