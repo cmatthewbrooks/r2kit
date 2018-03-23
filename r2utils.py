@@ -198,32 +198,6 @@ class R2Utils:
             elif prefix2 in op.get('disasm','N/A'):
                 return import_string[len(prefix2):len(import_string)]
 
-####################################################################
-
-    # This method should later be moved to a generic util class.
-
-    def get_file_list(self, location):
-        '''
-        This method is meant to abstract a location so that whether
-        a file or directory is passed, a for loop over the file_list
-        can be used. This should reduce code as I've had to use this
-        pattern multiple times.
-        '''
-
-        file_list = []
-
-        if os.path.isdir(location):
-            
-            for file in os.listdir(location):
-
-                file_list.append(os.path.join(location, file))
-
-        elif os.path.isfile(location):
-
-                file_list.append(location)
-
-        return file_list
-
 
 if __name__ == "__main__":
     test()
