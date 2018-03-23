@@ -69,7 +69,7 @@ class r2utils:
 
     def get_aflj(self, r2):
 
-        if not r2.__class__ == 'r2pipe.open':
+        if not str(r2.__class__) == 'r2pipe.open':
             return {}
         
         functions = r2.cmdj("aflj")
