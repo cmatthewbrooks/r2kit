@@ -15,18 +15,7 @@ performance gains on matching.
 
 ARGS:
 
- - mode - use the -g flag if generating; use the -m flag if 
-   you're matching in-session.
 
- - sigtype - use the -z flag if generating/matching based on
-   zignature intakes; the -ss flag is set up for string sets
-   but the Handler class has not been implemented yet.
-
- - input - use the -i flag to pass input - a file or dir to 
-   source from if generating or match from if matching
-
- - output - use the -o flag when matching to define the
-   output file.
 
 
 NOTES:
@@ -35,8 +24,7 @@ NOTES:
 
 TODO:
 
-- Implement dynamic instantiation based on file extension
-  in the Renamer class' rename_recognized_code method.
+- 
 
 
 '''
@@ -49,181 +37,50 @@ import json
 import base64
 
 import r2pipe
-import r2utils as R2utils
+import r2utils as r2u
 
-class Handler(object):
-    '''
+r2utils = r2u.R2Utils()
 
-    The Handler class is the parent class to handle sig hash
-    generation and matching. All child classes simply need to
-    define an extension for their filetype and implement the
-    generate_hashes method.
 
-    '''
-    def __init__(self):
+class Matcher:
 
-        self.hashes = {}
-        self.temphashes = set()
-        self.extension_handlers = self.initialize_handlers()
+    def __init__(self, location):
 
-    @staticmethod
-    def initialize_handlers():
-        
-        extension_handlers = dict()
+        self.r2 = r2utils.get_analyzed_r2pipe_from_input()
+        self.gen = Generator(self.r2)
+        self.file_list = get_file_list_from_location(location)
 
-        for cls in Handler.__subclasses__():
-            extension_handlers[cls.extension] = cls
-
-        return extension_handlers
-
-    def rename_from_location(self, location):
-
-        if os.path.isdir(location):
+    def match(self):
             
-            for file in os.listdir(location):
+        for file in self.file_list:
 
-                extension = os.path.splitext(file)[1].lower()
-                print extension, file
-                self.rename(extension, os.path.join(location, file))
+            print 'Matching from ' + file + '...'
+
+            extension = os.path.splitext(file)[1].lower()[1:]
+
+            self.gen.generate(extension)
 
 
-        elif os.path.isfile(location):
-
-                extension = os.path.splitext(location)[1].lower()
-                self.rename(extension, location)
-
-    def rename(self, extension, location):
-
-        print extension, location
-
-        if extension in self.extension_handlers:
-
-            cls = self.extension_handlers[extension]()
-            cls.generate_hashes_from_session()
-            cls.rename_session_functions(location)
-
-    def generate_hashes(self):
-        
-        #This is overridden by child classes
-        pass
-
-    def generate_hashes_from_session(self):
-
-        self.generate_hashes()
-
-    def generate_hashes_from_input(self, location, outfile):
-
-        if os.path.isdir(location) and self.check_outfile(outfile):
-
-            self.generate_hashes_from_dir(location)
-            self.write_hash_file(outfile)
-        
-        elif os.path.isfile(location) and self.check_outfile(outfile):
-        
-            self.generate_hashes(location)
-            self.write_hash_file(outfile)
-        
-        else:
-        
-            print "\nCannot create from input.\n"
-            sys.exit(1)
-
-    def generate_hashes_from_dir(self, directory):
-        
-        for file in self.sorted_alphanumeric(os.listdir(directory)):
-
-            print "Generating hashes for " + os.path.join(directory, file)
-            self.generate_hashes(os.path.join(directory, file))
-
-    def rename_session_functions(self, location):
-        
-        if os.path.isdir(location):
-            
-            for file in self.sorted_alphanumeric(os.listdir(location)):
-
-                if file.endswith(self.EXTENSION):
-
-                    self.rename_session_functions_from_hash_file(
-                        os.path.join(location,file)
-                    )
-
-        elif os.path.isfile(location) and location.endswith(self.EXTENSION):
-
-            self.rename_session_functions_from_hash_file(location)
-
-    def rename_session_functions_from_hash_file(self, location):
-        
-        r2 = r2pipe.open()
-        
-        with open(location,'r') as f:
+            with open(file,'r') as f:
                 file_hashes = json.load(f)
 
-        for funcname, funchash in self.hashes.iteritems():
+            
+            for funcname, funchash in self.gen.hashes.iteritems():
 
-            if (funcname.startswith('fcn.') and 
-                funchash in set(file_hashes.values())):
+                if (funcname.startswith('fcn.') and 
+                    funchash in set(file_hashes.values())):
 
-                r2.cmd('s ' + funcname)
-                r2.cmd('afn ' + self.generate_func_name(
-                    self.get_dict_key_from_value(file_hashes, funchash))
-                )
+                    self.r2.cmd('s ' + funcname)
+                    self.r2.cmd(
+                        'afn ' + self.get_dict_key_from_value(
+                            file_hashes, funchash
+                    ))
 
-        r2.quit()
+            self.gen.clear_hashes()
 
-    def write_hash_file(self, outfile):
 
-        if (outfile.count('.') == 1 and
-            outfile.endswith(self.EXTENSION)):
+        self.r2.quit()
 
-            pass
-
-        elif outfile.count('.') == 0:
-
-            outfile = outfile + self.EXTENSION
-
-        elif ('.' in outfile and 
-            not outfile.endswith(self.EXTENSION)):
-
-            outfile = outfile.split('.')[0] + self.EXTENSION
-
-        with open(outfile,'w') as f:
-            json.dump(self.hashes, f)
-
-    def check_outfile(self, outfile):
-
-        if not outfile:
-            return False
-
-        try:
-            with open(outfile,'w') as outfile:
-                return True
-
-        except IOError:
-            return False
-
-    def generate_func_name(self, name, location=None):
-
-        if not location:
-            return name
-        elif name.startswith('sym.'):
-            return name
-        elif name.startswith('fcn.') or name.startswith('loc.'):
-            return str(os.path.basename(location)) + '_' + name
-        else:
-            return name
-
-    # Taken from:
-    # https://stackoverflow.com/questions/4813061/
-    # nonalphanumeric-list-order-from-os-listdir-in-python
-
-    def sorted_alphanumeric(self, data):
-        convert = lambda text: int(text) if text.isdigit() else text.lower()
-
-        alphanum_key = lambda key: [ 
-            convert(c) for c in re.split('([0-9]+)', key) 
-        ]
-
-        return sorted(data, key=alphanum_key)
 
     # Taken from:
     # https://stackoverflow.com/questions/15784590/
@@ -233,45 +90,139 @@ class Handler(object):
         return [k for k,v in dict.iteritems() if v == value][0]
 
 
-class ZigHandler(Handler):
-    '''
+class Maker:
 
-    The ZigHandler class inherits from the Handler class. This child
-    handler generates hashes from byte sequences returned by a native
-    r2 zignature.
+    def __init__(self, sigtype, location, outfile):
 
-    '''
+        self.sigtype = sigtype
+        self.file_list = get_file_list_from_location(location)
+        self.outfile = outfile
+        self.hashes = {}
 
-    extension = '.zighashes'
+    def sigmake(self):
 
-    def __init__(self):
-
-        Handler.__init__(self)
-        self.EXTENSION = ZigHandler.extension
+        if not self.validate_outfile(self.outfile):
+            raise IOError('Cannot create outfile ' + outfile)
         
 
-    def generate_hashes(self, location=None):
-        
-        r2 = r2pipe.open(location)
-        
-        func_count = r2.cmd('aflc')
+        for file in self.file_list:
 
-        if int(func_count) == 0:
+            print 'Making ' + file + '...'
+
+            r2 = r2utils.get_analyzed_r2pipe_from_input(file)
+
+            g = Generator(r2)
+            g.generate(self.sigtype)
+
+            for k,v in g.hashes.iteritems():
+                if v not in self.hashes.values():
+                    self.hashes[self.generate_func_name(k, file)] = v
+
+            r2.quit()
+
+
+        self.write_hash_file(self.outfile, self.sigtype)
+
+    def generate_func_name(self, name, location):
+
+        if name.startswith('sym.'):
+            return name
+        elif name.startswith('fcn.') or name.startswith('loc.'):
+            return str(os.path.basename(location)) + '_' + name
+        else:
+            return name
+
+    def write_hash_file(self, outfile, sigtype):
+
+        extension = '.' + sigtype
+
+        if (outfile.count('.') == 1 and
+            outfile.endswith(extension)):
+
+            pass
+
+        elif outfile.count('.') == 0:
+
+            outfile = outfile + extension
+
+        elif ('.' in outfile and 
+            not outfile.endswith(extension)):
+
+            outfile = outfile.split('.')[0] + extension
+
+        with open(outfile,'w') as f:
+            json.dump(self.hashes, f)
+
+    def validate_outfile(self, outfile):
+
+        try:
+            with open(outfile,'w') as outfile:
+                return True
+
+        except IOError:
+            return False
+
+
+
+class Generator(object):
+    
+    def __init__(self, r2):
             
-            # If there are no functions, analyze the file
-            r2.cmd("aa; aar; aac")
+        self.valid_generators = self.initialize_generators()
 
-        funcs = r2.cmdj('aflj')
+        if str(r2.__class__) != 'r2pipe.open':
+            raise ValueError(r2 + 'is not a valid r2pipe.')
+
+        self.r2 = r2utils.get_analyzed_r2pipe_from_input(r2)
+
+        self.hashes = {}
+
+    @staticmethod
+    def initialize_generators():
+        
+        generators = dict()
+
+        for cls in Generator.__subclasses__():
+            generators[cls.sigtype] = cls
+
+        return generators
+
+    def generate(self, sigtype):
+
+        if sigtype not in self.valid_generators:
+            raise ValueError(sigtype + ' is not a valid sigtype.')
+
+        cls = self.valid_generators[sigtype](self.r2)
+        self.hashes.update(cls.generate_hashes())
+
+    def clear_hashes(self):
+
+        self.hashes = {}
+
+
+class ZigGenerator(Generator):
+
+    sigtype = 'zighash'
+
+    def __init__(self, r2):
+
+        Generator.__init__(self, r2)
+
+
+    def generate_hashes(self):
+
+        hashes = {}
+        temphashes = set()
+
+        funcs = self.r2.cmdj('aflj')
 
         for func in funcs:
 
             # Generate the full zignature.
-            r2.cmd('zaf ' + func['name'] + ' ' + self.generate_func_name(
-                func['name'],location)
-            )
+            self.r2.cmd('zaf ' + func['name'] + ' ' + func['name'])
 
             # View the zignature, get the bytes, and hash them.
-            zigs = r2.cmdj('zj')
+            zigs = self.r2.cmdj('zj')
 
             # Hacky but only a single sig can ever exist at once.
             zig_bytes = zigs[0]['bytes'] 
@@ -280,58 +231,40 @@ class ZigHandler(Handler):
 
             # Only create if the function is not too short and the 
             # function hash is not stored already
-            if len(zig_bytes) > 30 and sig_byte_hash not in self.temphashes:
+            if len(zig_bytes) > 30 and sig_byte_hash not in temphashes:
 
                 # Add the func+hash pair to the dict
-                self.hashes[self.generate_func_name(func['name'],location)] = (
+                hashes[func['name']] = (
                     sig_byte_hash
                 )
 
                 # Update set
-                self.temphashes.add(sig_byte_hash)
+                temphashes.add(sig_byte_hash)
 
             # Delete all zignatures to keep continuous 
             # assurance only one exists at a time.
-            r2.cmd('z-*')
+            self.r2.cmd('z-*')
             
-        r2.quit()
+        return hashes
 
 
 
-class StringSetHandler(Handler):
-    '''
+class StringSetGenerator(Generator):
 
-    The StringSetHandler class interits from the Handler class. This child
-    handler generates hashes from lists of strings referenced in a given
-    function.
+    sigtype = 'stringsethash'
 
-    '''
+    def __init__(self, r2):
 
-    extension = '.stringsethashes'
-
-    def __init__(self):
+        Generator.__init__(self, r2)
         
-        Handler.__init__(self)
-        self.EXTENSION = StringSetHandler.extension
-
 
     def generate_hashes(self, location=None):
 
+        hashes = {}
+        temphashes = set()
         string_sets = {}
 
-        if not location:
-            location = ''
-
-        r2 = r2pipe.open(location) 
-        func_count = r2.cmd('aflc')
-
-        if int(func_count) == 0:
-            
-            # If there are no functions, analyze the file
-            r2.cmd("aa; aar; aac")
-        
-
-        strings = r2.cmdj("izzj")
+        strings = self.r2.cmdj("izzj")
 
         # First, get the strings and for each string, make sure it is
         # ascii or wide.
@@ -340,7 +273,7 @@ class StringSetHandler(Handler):
                 if string['type'] == 'ascii' or string['type'] == 'utf8':
 
                     # Next, get the cross references to the string.
-                    xrefto = r2.cmdj("axtj " + str(string['vaddr']))
+                    xrefto = self.r2.cmdj("axtj " + str(string['vaddr']))
                     if xrefto:
                         for xref in xrefto:
 
@@ -369,14 +302,54 @@ class StringSetHandler(Handler):
 
             stringsethash = hashlib.md5(''.join(stringset)).hexdigest()
 
-            if stringsethash not in self.temphashes:
+            if stringsethash not in temphashes:
 
-                self.temphashes.add(stringsethash)
-                self.hashes[self.generate_func_name(func, location)] = (
+                temphashes.add(stringsethash)
+                hashes[func] = (
                     stringsethash
                 )
 
-        r2.quit()
+
+        return hashes
+
+
+
+
+def get_file_list_from_location(location):
+    '''
+    This method is meant to abstract a location so that whether
+    a file or directory is passed, a for loop over the file_list
+    can be used. This should reduce code as I've had to use this
+    pattern multiple times.
+    '''
+
+    file_list = []
+
+    if os.path.isdir(location):
+        
+        for file in sorted_alphanumeric(os.listdir(location)):
+
+            file_list.append(os.path.join(location, file))
+
+    elif os.path.isfile(location):
+
+            file_list.append(location)
+
+    return file_list
+
+# Taken from:
+# https://stackoverflow.com/questions/4813061/
+# nonalphanumeric-list-order-from-os-listdir-in-python
+
+def sorted_alphanumeric(data):
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+
+    alphanum_key = lambda key: [ 
+        convert(c) for c in re.split('([0-9]+)', key) 
+    ]
+
+    return sorted(data, key=alphanum_key)
+
 
 
 if __name__ == '__main__':
@@ -387,51 +360,36 @@ if __name__ == '__main__':
 
     mode = parser.add_mutually_exclusive_group(required=True)
 
-    mode.add_argument('-g','--generate',
-        action='store_true',help='Generate signatures for file or directory')
-    mode.add_argument('-m','--match',
+    mode.add_argument('-mk','--make',
+        action='store_true',help='Make signatures for file or directory')
+    mode.add_argument('-mt','--match',
         action='store_true',help='Match signatures for current session')
 
-    sigtype = parser.add_mutually_exclusive_group(required=True)
 
-    sigtype.add_argument('-z','--zigs', 
-        action='store_true',help='Operate using r2 zignature format.')
-    sigtype.add_argument('-ss','--stringset', 
-        action='store_true',help='Operate using string set matching.')
+    parser.add_argument('-t','--sigtype',
+        help = 'The type of function hashes to make.')
 
     parser.add_argument('-l','--location', 
-        help = 'Location for generation or matching. Can be a file or directory.')
+        help = 'Location for making or matching (can be file or directory).')
+
     parser.add_argument('-o','--outfile',
-        help = 'An output file for generate mode when generating new signatures.')
+        help = 'An output file for making new signatures.')
 
     args = parser.parse_args()
 
 
     # Execute according to args.
 
-    if args.generate and args.zigs and args.location and args.outfile:
+    if args.make and args.sigtype and args.location and args.outfile:
 
-        zh = ZigHandler()
-        zh.generate_hashes_from_input(args.location, args.outfile)
+        maker = Maker(args.sigtype, args.location, args.outfile)
+        maker.sigmake()
 
-    elif args.match and args.zigs and args.location:
-        
-        zh = ZigHandler()
-        zh.generate_hashes_from_session()
-        zh.rename_session_functions(args.location)
+    elif args.match and args.location:
 
-    elif args.generate and args.stringset and args.location and args.outfile:
-
-        ssh = StringSetHandler()
-        ssh.generate_hashes_from_input(args.location, args.outfile)
-
-    elif args.match and args.stringset and args.location:
-
-        ssh = StringSetHandler()
-        ssh.generate_hashes_from_session()
-        ssh.rename_session_functions(args.location)
+        matcher = Matcher(args.location)
+        matcher.match()
 
     else:
 
-        print '\nCannot execute in current state\n'
-        sys.exit(1)
+        raise RuntimeError('Cannot execute in current state.')
