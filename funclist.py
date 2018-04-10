@@ -97,7 +97,45 @@ class FuncList:
         return utility_funcs
 
 
+def usage():
+
+    print '\n' + sys.argv[0] + ' - generate various types of function lists.'
+
+    print '''
+
+    DESC:
+
+        This utility allows a user to make or match hashed function
+        signatures. Currently supported signature types include:
+
+            - Hashes of r2's native zignature format
+            - Hashes of function string set references
+
+    EXAMPLES:
+
+        $python funclist.py -fr
+
+        $python funclist.py -u
+
+        $python funclist.py -fr /bin/ls
+
+    ARGS:
+
+        -f - A file to pipe to an r2 session. If not provided, it is assumed
+             the script is being invoked from within an r2 session.
+
+        -fr - Print first-round functions (functions that do not call others)
+
+        -u - Print utility functions (functions called by multiple others)
+
+    '''
+
+
 if __name__ == '__main__':
+
+    if len(sys.argv) == 1:
+        usage()
+        sys.exit(1)
 
     parser = argparse.ArgumentParser()
 
@@ -111,8 +149,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    if not args:
-        usage()
 
     if args:
         
