@@ -228,9 +228,48 @@ class YaraRule:
                 even = False
 
         return formatted_opcode_string
-        
+
+
+def usage():
+
+    print '\n' + sys.argv[0] + ' - generate YARA signatures from functions.'
+
+    print '''
+
+    DESCRIPTION:
+
+        This utility allows a user to generate YARA signatures for a given
+        function.
+
+        It is assumed this script is being invoked from within an active
+        r2 session. It is also assumed the session offset is the start of
+        the target function.
+
+    EXAMPLES:
+
+        >> #!pipe python functoyara.py    
+
+        >> #!pipe python functoyara.py -n test_yara_rule -a "Matt Brooks"
+
+    ARGS:
+
+        -n - a name for the rule; a default will be used if this is not
+             provided
+
+        -a - authorship for the meta field; this can be overridden by
+             setting the instance attribute for the YaraRule class
+
+
+    '''
+
+
 
 if __name__ == '__main__':
+
+
+    if len(sys.argv) == 1:
+        usage()
+        sys.exit(1)
     
     parser = argparse.ArgumentParser()
 
