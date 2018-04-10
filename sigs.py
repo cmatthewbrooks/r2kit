@@ -1,33 +1,6 @@
-'''
-Author: Matt Brooks, @cmatthewbrooks
 
-DESCRIPTION:
+# Author: Matt Brooks, @cmatthewbrooks
 
-The sigs.py script creates Python dicts of func name/hash
-pairs for different types of intake patterns. Currently supported
-intake patterns include:
-
- - The r2 native zignature format.
- - Function reference strings stored in list form.
-
-These intake patterns are then hashed for smaller storage size and
-performance gains on matching.
-
-ARGS:
-
-
-
-
-NOTES:
-
-- 
-
-TODO:
-
-- 
-
-
-'''
 
 import os,sys
 import argparse
@@ -39,14 +12,24 @@ import base64
 import r2pipe
 import r2utils as r2u
 
+
+
 r2utils = r2u.R2Utils()
 
 
+
 class Matcher:
+    '''
 
-    def __init__(self, location):
+    The Matcher class is used to match signature hashes and rename functions
+    during an active r2 session. It uses a Generator and generates the correct
+    sigtype based on the extension of the signature file being used.
 
-        self.r2 = r2utils.get_analyzed_r2pipe_from_input()
+    '''
+
+    def __init__(self, location, r2 = None):
+
+        self.r2 = r2utils.get_analyzed_r2pipe_from_input(r2)
         self.gen = Generator(self.r2)
         self.file_list = get_file_list_from_location(location)
 
@@ -56,9 +39,9 @@ class Matcher:
 
             print 'Matching from ' + file + '...'
 
-            extension = os.path.splitext(file)[1].lower()[1:]
+            sigtype = os.path.splitext(file)[1].lower()[1:]
 
-            self.gen.generate(extension)
+            self.gen.generate(sigtype)
 
 
             with open(file,'r') as f:
@@ -91,6 +74,12 @@ class Matcher:
 
 
 class Maker:
+    '''
+
+    The Maker class is used to make signatures. It uses a Generator and
+    generates signatures of a given sigtype passed as an argument.
+
+    '''
 
     def __init__(self, sigtype, location, outfile):
 
@@ -165,6 +154,14 @@ class Maker:
 
 
 class Generator(object):
+    '''
+
+    The Generator class generates function hashes of a given type. Each
+    type is implemented as a subclass where the subclass requirements are
+    a class attribute for the signature and a single method to return the
+    generated hashes as a Python dictionary.
+
+    '''
     
     def __init__(self, r2):
             
@@ -258,7 +255,7 @@ class StringSetGenerator(Generator):
         Generator.__init__(self, r2)
         
 
-    def generate_hashes(self, location=None):
+    def generate_hashes(self):
 
         hashes = {}
         temphashes = set()
@@ -351,8 +348,46 @@ def sorted_alphanumeric(data):
     return sorted(data, key=alphanum_key)
 
 
+def usage():
+
+    print '\n' + sys.argv[0] + ' - make or match hashed function signatures.'
+
+    print '''
+
+    DESC:
+
+        This utility allows a user to make or match hashed function
+        signatures. Currently supported signature types include:
+
+            - Hashes of r2's native zignature format
+            - Hashes of function string set references
+
+    MAKING:
+
+        -mk - flag specifying 'make' mode
+
+        -t - sigtype to make
+
+        -l - location of input files (can be file or directory)
+
+        -o - output signature file
+
+    MATCHING:
+
+        -mt - flag specifying 'match' mode
+
+        -l - location of signature files to match (can be file or directory)
+
+
+
+    '''
+
 
 if __name__ == '__main__':
+
+    if len(sys.argv) == 1:
+        usage()
+        sys.exit(1)
 
     # Do all the arg stuff.
 
