@@ -32,10 +32,19 @@ import sigs
 
 class SessionStarter:
 
+    default_sig_location = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), '/sigs/'
+    )
+
     def __init__(self, input_obj = None):
         
         self.r2utils = r2utils.R2Utils()
         self.r2 = self.r2utils.get_analyzed_r2pipe_from_input(input_obj)
+
+    def auto_start(self):
+
+        self.rename_library_code(SessionStarter.default_sig_location)
+        self.rename_common_funcs()
 
     def rename_library_code(self, location):
 
