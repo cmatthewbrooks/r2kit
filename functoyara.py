@@ -1,48 +1,5 @@
-'''
-Author: Matt Brooks, @cmatthewbrooks
 
-DESCRIPTION:
-
-The functoyara.py script will output an opcode-based YARA
-signature from the current function of the r2 session.
-
-ARGS:
-
-This script can take up to two optional arguments and attempts
-to use sane defaults if those arguments are not passed.
-
--n (--name): This will be the name of the signature. If this
-is not passed in at runtime, the name will simply be
-"unnamed_rule".
-
--a (--author): This will be the authorship string of the
-signature. 
-
-    ^^ Note there is also a constant hardcoded into the
-    YaraRule class. If that constant value is set, that value
-    will override the argument under the assumption the user
-    does not want to keep setting their most commonly used
-    authorship string.
-
-NOTES:
-
-- This script can only be run within an r2 session. It does
-not stand-alone.
-
-- Currently, this script uses the r2 signature-generation
-capability to determine which bytes should exist and which
-bytes should be wild-carded.
-
-TODO:
-
-- Get file hashes quickly from within an r2 shell to add
-  as rule meta??
-
-- Examine a better way to create the byte string?
-
-- Test x64 or .NET files.
-
-'''
+# Author: Matt Brooks, @cmatthewbrooks
 
 
 import os,sys

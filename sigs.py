@@ -12,11 +12,7 @@ import base64
 import r2pipe
 import r2utils as r2u
 
-
-
 r2utils = r2u.R2Utils()
-
-
 
 class Matcher:
     '''
