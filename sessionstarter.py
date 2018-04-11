@@ -40,9 +40,8 @@ class SessionStarter:
     def rename_library_code(self, location):
 
         # imported from sigs.py
-        h = sigs.Handler()
-        h.initialize_handlers()
-        h.rename_from_location(location)
+        matcher = sigs.Matcher(location, self.r2)
+        matcher.match()
 
     def rename_common_funcs(self):
 
