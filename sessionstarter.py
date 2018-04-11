@@ -8,8 +8,10 @@ import json
 
 import r2pipe 
 
-import r2utils
+import r2utils as r2u
 import sigs
+
+r2utils = r2u.R2Utils()
 
 class SessionStarter:
 
@@ -19,8 +21,7 @@ class SessionStarter:
 
     def __init__(self, input_obj = None):
         
-        self.r2utils = r2utils.R2Utils()
-        self.r2 = self.r2utils.get_analyzed_r2pipe_from_input(input_obj)
+        self.r2 = r2utils.get_analyzed_r2pipe_from_input(input_obj)
 
     def auto_start(self):
 
@@ -35,27 +36,27 @@ class SessionStarter:
 
     def rename_common_funcs(self):
 
-        funcj_list = self.r2utils.get_funcj_list(self.r2)
+        funcj_list = r2utils.get_funcj_list(self.r2)
 
         for funcj in funcj_list:
 
-            if (self.r2utils.check_is_import_jmp_func(funcj) 
+            if (r2utils.check_is_import_jmp_func(funcj) 
                 and funcj['name'].startswith('fcn.')):
 
                 self.r2.cmd('s ' + str(funcj['addr']))
                 self.r2.cmd('afn jmp_' + 
-                    self.r2utils.get_import_from_import_jmp_func(funcj)
+                    r2utils.get_import_from_import_jmp_func(funcj)
                 )
 
-            elif (self.r2utils.check_is_wrapper_func(funcj) 
+            elif (r2utils.check_is_wrapper_func(funcj) 
                 and funcj['name'].startswith('fcn.')):
 
                 self.r2.cmd('s ' + str(funcj['addr']))
                 self.r2.cmd('afn wrapper_' + 
-                    self.r2utils.get_call_from_wrapper(funcj).replace(' ','_')
+                    r2utils.get_call_from_wrapper(funcj).replace(' ','_')
                 )
 
-            elif (self.r2utils.check_is_global_assignment_func(funcj) 
+            elif (r2utils.check_is_global_assignment_func(funcj) 
                 and funcj['name'].startswith('fcn.')):
 
                 self.r2.cmd('s ' + str(funcj['addr']))
