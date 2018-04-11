@@ -62,9 +62,6 @@ class Matcher:
             self.gen.clear_hashes()
 
 
-        self.r2.quit()
-
-
     # Taken from:
     # https://stackoverflow.com/questions/15784590/
     # how-can-you-print-a-key-given-a-value-in-a-dictionary-for-python/15784656
