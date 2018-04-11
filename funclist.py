@@ -1,41 +1,13 @@
-'''
-Author: Matt Brooks, @cmatthewbrooks
 
-DESCRIPTION:
-
-The funclist.py script obtains lists of specific
-function types to help an analyst focus on a category
-of functions. It currently can find the following
-function types:
-
-- First-round functions: Likely developer-written functions
-that do not have any call instructions.
-
-- Utility functions: Likely developer-written functions
-called by at least 3 other functions.
-
-ARGS:
-
-Use the -fr flag to list first-round functions and use the
--u flag to list utility functions.
-
-To use the script against a file instead of within an r2
-session, use the -f flag with a /path/to/file.exe.
-
-NOTES:
-
-- This script can stand-alone outside an r2 session.
-
-TODO:
-
-
-'''
+# Author: Matt Brooks, @cmatthewbrooks
 
 import os,sys
 import argparse
 
 import r2pipe
-import r2utils as R2utils
+import r2utils as r2u
+
+r2utils = r2u.R2Utils()
 
 class FuncList:
 
@@ -52,8 +24,6 @@ class FuncList:
 
     def populate_list(self, list_type, file=None):
 
-        r2utils = R2utils.r2utils()
-
         if list_type == 'firstround':
             self.func_list.update(self.get_first_round_list(file))
         elif list_type == 'utility':
@@ -68,7 +38,6 @@ class FuncList:
 
     def get_first_round_list(self, file=None):
 
-        r2utils = R2utils.r2utils()
         first_round_funcs = []
 
         funcj_list = r2utils.get_funcj_list(file)
@@ -83,7 +52,6 @@ class FuncList:
 
     def get_utility_list(self, file=None):
 
-        r2utils = R2utils.r2utils()
         utility_funcs = []
 
         funcj_list = r2utils.get_funcj_list(file)
