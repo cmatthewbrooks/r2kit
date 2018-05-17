@@ -7,6 +7,7 @@ r2kit is a set of scripts to help with a workflow for malware code analysis usin
 * sessionstarter.py - Run from inside an r2 session to auto rename imports, thunks, wrapper functions, and library functions.
 * funclist.py - Run from inside an r2 session or externally against a binary to list certain function types.
 * functoyara.py - Run from inside an r2 session to create a YARA signature for the bytes of the current function.
+* funcstrings.py - Run from inside an r2 session to see all referenced strings organized by function.
 
 See [the workflow document](docs/WORKFLOW.md) for more information on usage.
 
