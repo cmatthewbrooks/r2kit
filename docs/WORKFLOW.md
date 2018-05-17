@@ -9,10 +9,12 @@ $ r2 /path/to/malware.exe
 Run sessionstart.py at the start. This will run a basic analysis sequence (aa; aac; aar) then rename functions. I did this because I seemed to have different naming preferences from r2's defaults.
 
 ```
-!#pipe python /path/to/sessionstart.py
+!#pipe python /path/to/sessionstart.py -l sigs/
 ```
 
-You can check the function listing to see how that went ('afll' - 'analyze func listing long').
+The -l flag is optional in case you don't want to do signature matching from libary code. The main SessionStarter class also features a method called "auto_start" that can be used in batch mode. This would be useful to batch through a directory of files and only perform certain pipe operations to developer-generated functions (not imports or functions matching library code).
+
+Carrying on, you can check the function listing to see how that went ('afll' - 'analyze func listing long').
 
 Next, I like to identify "first-round" functions - functions that are likely developer-written (not thunks, wrappers, library code, etc) that have zero call instructions. These are good to rename quickly and also often make interesting use-cases for opcode-based YARA signatures.
 
@@ -37,4 +39,12 @@ Next, I like to see "utility" functions - small functions frequently called by o
 
 I will usually print each disassembly ('pdf' - 'print func disassembly') as well and rename where possible. Note that funclist.py can be run outside an active r2 session by using the -f flag and passing a file.
 
-To be continued as more scripts are added...
+To continue quick renaming efforts, looking at all the strings referenced by each function can be useful. Currently, this goes through the whole file but a helpful future limiter would be to use flagspaces and only run through functions marked with certain flags.
+
+```
+#!pipe python /path/to/funcstrings.py
+```
+
+The only requirement for funstrings is being in an active r2 session. It dumps raw JSON at the moment.
+
+To be continued as more code is added...

@@ -25,10 +25,10 @@ vc8_msvcp80.dll
 In the above manner, all the VC6 code will be parsed before VC7 and VC8. To actually generate the signatures, you can use the following command:
 
 ```
-$ python sigs.py -g -z -i path/to/dlls/ -o vc32bit.zighashes
+$ python sigs.py -mk -t zighash -l path/to/dlls/ -o vc32bit.zighashes
 ```
 
-In the above example, the g flag says we are generating (as opposed to matching) and the z flag says the intake are zignatures (as opposed to string sets or another future experimental intake). The i flag is for input, which can be a single file or a directory of files and the o flag is for output. When generating signature hashes from zignatures, the output file should use a 'zighashes' extension. The output will be stored in a file in the following format:
+In the above example, the -mk flag says we are making (as opposed to matching) and the -t zighash flag says the intake are zignatures (as opposed to string sets or another future experimental intake). The l flag is for localtion of input, which can be a single file or a directory of files and the o flag is for output. When generating signature hashes from zignatures, the output file should use the type as the file extension. The output will be stored in a file in the following format:
 
 ```
 $ head -n 10 vc32bit.zighashes
@@ -53,10 +53,10 @@ Generation performance can vary. On a single file, the process is relatively qui
 Matching can be done during an r2 session with the following command:
 
 ```
-[0x10001a2c]> #!pipe python sigs.py -m -z -i /path/to/sigs.zighashes
+[0x10001a2c]> #!pipe python sigs.py -mt -l /path/to/sigs.zighashes
 ```
 
-In the above example, the m flag says we are matching. The other flags are all the same as what was used during the generation process. The o flag is not needed because matching does not generate an output. Note - matching is to be done during an r2 session to rename functions of the session's target binary.
+In the above example, the mt flag says we are matching. The l flagis the same as what was used during the generation process. The o flag is not needed because matching does not generate an output. Note - matching is to be done during an r2 session to rename functions of the session's target binary. The type will be determined from the file extension.
 
 To show an example highlighting this method's accuracy, consider two malware samples with the same functionality where one was compiled using Visual Studio 2005 and the other was compiled using 2012.
 
