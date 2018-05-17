@@ -33,6 +33,11 @@ class R2Utils:
         else:
             return None
 
+        try:
+            r2.cmd("aflc")
+        except IOError:
+            raise Exception('Error: Not inside an r2 session.')
+
 
         if int(r2.cmd('aflc')) == 0:
             # If there are no functions, analyze the file
