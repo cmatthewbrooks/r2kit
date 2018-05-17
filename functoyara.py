@@ -8,30 +8,21 @@ import json
 
 import r2pipe 
 
+
 class YaraRule:
 
-    def __init__(self):
+    def __init__(self, r2):
         # Again, note that setting this value overrides any
         # -a args passed at run-time.
         self.AUTHOR = "Matt Brooks, @cmatthewbrooks"
+        self.r2 = r2
 
-    def create(self,name,author):
+    def print_rule(self,name,author):
         # This is the externally-facing func to be called from
         # outside the class.
-
-        r2 = r2pipe.open() 
-
-        func_count = r2.cmd('aflc')
-
-        if int(func_count) == 0:
  
-            # If there are no functions, analyze the file
-            print('There are 0 functions. Please analyze the file.')
-
-        elif int(func_count) > 0:
- 
-            rule = self.create_rule(name,author)
-            print rule
+        rule = self.create_rule(name,author)
+        print rule
 
     ##########################################################
 
@@ -90,9 +81,7 @@ class YaraRule:
 
         # Grab the filename over r2pipe.
 
-        r2 = r2pipe.open()
-        infoj = r2.cmdj('ij')
-        r2.quit()
+        infoj = self.r2.cmdj('ij')
 
         if infoj:
             return infoj['core']['file']
@@ -108,9 +97,7 @@ class YaraRule:
 
         comment_instructions = ''
 
-        r2 = r2pipe.open()
-        funcj = r2.cmdj('pdfj')
-        r2.quit()
+        funcj = self.r2.cmdj('pdfj')
 
         if funcj:
             
@@ -130,11 +117,9 @@ class YaraRule:
         # As mentioned above, the bytes for the printed signature
         # come from r2's zignatures functionality.
         
-        r2 = r2pipe.open()
-        r2.cmd('z-*') #This removes existing signatures so only one exists.
-        r2.cmd('zaf')
-        sigj = r2.cmdj('zj')
-        r2.quit()
+        self.r2.cmd('z-*') #This removes existing signatures so only one exists.
+        self.r2.cmd('zaf')
+        sigj = self.r2.cmdj('zj')
 
         if sigj:
 
@@ -236,5 +221,21 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    rule = YaraRule()
-    rule.create(args.name,args.author)
+    r2 = r2pipe.open()
+
+    try:
+
+        if int(r2.cmd("aflc")) == 0:
+
+            raise Exception(
+                "The file has not been analyzed. Run aaa (or similar)."
+            )
+
+    except IOError:
+        print "\n\tError: Not inside an r2 session.\n"
+        sys.exit(1)
+
+    rule = YaraRule(r2)
+    rule.print_rule(args.name,args.author)
+
+    r2.quit()
