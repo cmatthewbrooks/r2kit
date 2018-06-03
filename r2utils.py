@@ -26,10 +26,8 @@ class R2PipeUtility:
 
     R2PIPE_CLASS_NAME = 'r2pipe.open'
 
-    def __init__(self):
-        pass
-
-    def get_analyzed_r2pipe_from_input(self, input_obj = None):
+    @staticmethod
+    def get_analyzed_r2pipe_from_input(input_obj = None):
 
         if not input_obj:
             r2 = r2pipe.open()
@@ -53,7 +51,8 @@ class R2PipeUtility:
 
         return r2
 
-    def get_funcj_list(self, r2):
+    @staticmethod
+    def get_funcj_list(r2):
 
         if not str(r2.__class__) == R2PipeUtility.R2PIPE_CLASS_NAME:
             return []
@@ -74,7 +73,8 @@ class R2PipeUtility:
 
         return funcj_list
 
-    def get_aflj(self, r2):
+    @staticmethod
+    def get_aflj_list(r2):
 
         if not str(r2.__class__) == R2PipeUtility.R2PIPE_CLASS_NAME:
             return {}
@@ -100,32 +100,31 @@ class R2FuncUtility:
     UTILITY = 'utility'
     UNKNOWN = 'unknown'
 
-    def __init__(self):
-        pass
-
+    @staticmethod
     def classify_func(self, funcj):
 
-        if self.check_is_import_jmp_func(funcj):
+        if R2FuncUtility.check_is_import_jmp_func(funcj):
             return R2FuncUtility.IMPORT
-        elif self.check_is_global_assignment_func(funcj):
+        elif R2FuncUtility.check_is_global_assignment_func(funcj):
             return R2FuncUtility.GLOBAL
-        elif self.check_is_thunk_func(funcj):
+        elif R2FuncUtility.check_is_thunk_func(funcj):
             return R2FuncUtility.THUNK
-        elif self.check_is_wrapper_func(funcj):
+        elif R2FuncUtility.check_is_wrapper_func(funcj):
             return R2FuncUtility.WRAPPER
-        elif self.check_is_first_round_func(funcj):
+        elif R2FuncUtility.check_is_first_round_func(funcj):
             return R2FuncUtility.FIRST_ROUND
-        elif self.check_is_utility_func(funcj):
+        elif R2FuncUtility.check_is_utility_func(funcj):
             return R2FuncUtility.UTILITY
         else:
             return R2FuncUtility.UNKNOWN
 
-    def check_is_analysis_func(self, funcj):
+    @staticmethod
+    def check_is_analysis_func(funcj):
 
-        if (self.check_is_import_jmp_func(funcj) or
-            self.check_is_global_assignment_func(funcj) or
-            self.check_is_thunk_func(funcj) or
-            self.check_is_wrapper_func(funcj)):
+        if (R2FuncUtility.check_is_import_jmp_func(funcj) or
+            R2FuncUtility.check_is_global_assignment_func(funcj) or
+            R2FuncUtility.check_is_thunk_func(funcj) or
+            R2FuncUtility.check_is_wrapper_func(funcj)):
 
             return False
 
@@ -133,7 +132,8 @@ class R2FuncUtility:
 
             return True
 
-    def check_is_import_jmp_func(self, funcj):
+    @staticmethod
+    def check_is_import_jmp_func(funcj):
 
         if (len(funcj['ops']) == 1
             and funcj['size'] == 6
@@ -145,7 +145,8 @@ class R2FuncUtility:
 
             return False
 
-    def check_is_global_assignment_func(self, funcj):
+    @staticmethod
+    def check_is_global_assignment_func(funcj):
 
         if (funcj['ops'][0]['type'] == 'mov'
             and funcj['ops'][1]['type'] == 'ret'):
@@ -156,7 +157,8 @@ class R2FuncUtility:
 
             return False
 
-    def check_is_thunk_func(self, funcj):
+    @staticmethod
+    def check_is_thunk_func(funcj):
 
         if 1 < len(funcj['ops']) <= 3:
 
@@ -166,9 +168,10 @@ class R2FuncUtility:
 
             return False
 
-    def check_is_wrapper_func(self, funcj):
+    @staticmethod
+    def check_is_wrapper_func(funcj):
 
-        calls = self.get_call_count_from_funcj(funcj)
+        calls = R2FuncUtility.get_call_count_from_funcj(funcj)
 
         if (len(funcj['ops']) > 3 and
             len(funcj['ops']) <= 20 and
@@ -180,9 +183,10 @@ class R2FuncUtility:
 
             return False
 
-    def check_is_first_round_func(self, funcj):
+    @staticmethod
+    def check_is_first_round_func(funcj):
 
-        calls = self.get_call_count_from_funcj(funcj)
+        calls = R2FuncUtility.get_call_count_from_funcj(funcj)
 
         if calls == 0:
 
@@ -192,7 +196,8 @@ class R2FuncUtility:
 
             return False
 
-    def check_is_utility_func(self, funcj):
+    @staticmethod
+    def check_is_utility_func(funcj):
 
         call_xref_count = 0
 
@@ -206,7 +211,8 @@ class R2FuncUtility:
         elif call_xref_count <= 2:
             return False
 
-    def get_call_count_from_funcj(self, funcj):
+    @staticmethod
+    def get_call_count_from_funcj(funcj):
 
         count = 0
 
@@ -217,7 +223,8 @@ class R2FuncUtility:
 
         return count
 
-    def get_import_from_import_jmp_func(self, funcj):
+    @staticmethod
+    def get_import_from_import_jmp_func(funcj):
 
         op = funcj['ops'][0]
 
@@ -226,7 +233,8 @@ class R2FuncUtility:
     # The get_call_from_wrapper method needs better thought and
     # design. It's hacky right now.
 
-    def get_call_from_wrapper(self, funcj):
+    @staticmethod
+    def get_call_from_wrapper(funcj):
 
         wrapper_call = ''
 
@@ -261,9 +269,6 @@ class R2ParseUtility:
 
     WINAPI_IMP_PREFIX_1 = 'jmp dword ['
     WINAPI_IMP_PREFIX_2 = 'jmp dword '
-
-    def __init__(self):
-        pass
 
     @staticmethod
     def parse_import_from_import_jmp_opcode(self, opcode):
