@@ -10,9 +10,7 @@ import json
 import base64
 
 import r2pipe
-import r2utils as r2u
-
-r2utils = r2u.R2Utils()
+from r2utils import R2PipeUtility as r2pu, R2FuncUtility as r2fu
 
 class Matcher:
     '''
@@ -25,12 +23,12 @@ class Matcher:
 
     def __init__(self, location, r2 = None):
 
-        self.r2 = r2utils.get_analyzed_r2pipe_from_input(r2)
+        self.r2 = r2pu.get_analyzed_r2pipe_from_input(r2)
         self.gen = Generator(self.r2)
         self.file_list = get_file_list_from_location(location)
 
     def match(self):
-            
+
         for file in self.file_list:
 
             print 'Matching from ' + file + '...'
@@ -43,10 +41,10 @@ class Matcher:
             with open(file,'r') as f:
                 file_hashes = json.load(f)
 
-            
+
             for funcname, funchash in self.gen.hashes.iteritems():
 
-                if (funcname.startswith('fcn.') and 
+                if (funcname.startswith('fcn.') and
                     funchash in set(file_hashes.values())):
 
                     self.r2.cmd('s ' + funcname)
@@ -85,13 +83,13 @@ class Maker:
 
         if not self.validate_outfile(self.outfile):
             raise IOError('Cannot create outfile ' + outfile)
-        
+
 
         for file in self.file_list:
 
             print 'Making ' + file + '...'
 
-            r2 = r2utils.get_analyzed_r2pipe_from_input(file)
+            r2 = r2pu.get_analyzed_r2pipe_from_input(file)
 
             g = Generator(r2)
             g.generate(self.sigtype)
@@ -127,7 +125,7 @@ class Maker:
 
             outfile = outfile + extension
 
-        elif ('.' in outfile and 
+        elif ('.' in outfile and
             not outfile.endswith(extension)):
 
             outfile = outfile.split('.')[0] + extension
@@ -155,21 +153,21 @@ class Generator(object):
     generated hashes as a Python dictionary.
 
     '''
-    
+
     def __init__(self, r2):
-            
+
         self.valid_generators = self.initialize_generators()
 
         if str(r2.__class__) != 'r2pipe.open':
             raise ValueError(r2 + 'is not a valid r2pipe.')
 
-        self.r2 = r2utils.get_analyzed_r2pipe_from_input(r2)
+        self.r2 = r2pu.get_analyzed_r2pipe_from_input(r2)
 
         self.hashes = {}
 
     @staticmethod
     def initialize_generators():
-        
+
         generators = dict()
 
         for cls in Generator.__subclasses__():
@@ -215,11 +213,11 @@ class ZigGenerator(Generator):
             zigs = self.r2.cmdj('zj')
 
             # Hacky but only a single sig can ever exist at once.
-            zig_bytes = zigs[0]['bytes'] 
+            zig_bytes = zigs[0]['bytes']
 
             sig_byte_hash = hashlib.md5(zig_bytes.encode()).hexdigest()
 
-            # Only create if the function is not too short and the 
+            # Only create if the function is not too short and the
             # function hash is not stored already
             if len(zig_bytes) > 30 and sig_byte_hash not in temphashes:
 
@@ -231,10 +229,10 @@ class ZigGenerator(Generator):
                 # Update set
                 temphashes.add(sig_byte_hash)
 
-            # Delete all zignatures to keep continuous 
+            # Delete all zignatures to keep continuous
             # assurance only one exists at a time.
             self.r2.cmd('z-*')
-            
+
         return hashes
 
 
@@ -246,7 +244,7 @@ class StringSetGenerator(Generator):
     def __init__(self, r2):
 
         Generator.__init__(self, r2)
-        
+
 
     def generate_hashes(self):
 
@@ -269,7 +267,7 @@ class StringSetGenerator(Generator):
 
                             # If the xref comes from a function, either add it
                             # to the list or add a new dictionary item.
-                            if ('fcn_name' in xref and 
+                            if ('fcn_name' in xref and
                                 len(base64.b64decode(string['string'])) >= 10):
 
                                 if xref['fcn_name'] in string_sets:
@@ -316,7 +314,7 @@ def get_file_list_from_location(location):
     file_list = []
 
     if os.path.isdir(location):
-        
+
         for file in sorted_alphanumeric(os.listdir(location)):
 
             file_list.append(os.path.join(location, file))
@@ -334,8 +332,8 @@ def get_file_list_from_location(location):
 def sorted_alphanumeric(data):
     convert = lambda text: int(text) if text.isdigit() else text.lower()
 
-    alphanum_key = lambda key: [ 
-        convert(c) for c in re.split('([0-9]+)', key) 
+    alphanum_key = lambda key: [
+        convert(c) for c in re.split('([0-9]+)', key)
     ]
 
     return sorted(data, key=alphanum_key)
@@ -397,7 +395,7 @@ if __name__ == '__main__':
     parser.add_argument('-t','--sigtype',
         help = 'The type of function hashes to make.')
 
-    parser.add_argument('-l','--location', 
+    parser.add_argument('-l','--location',
         help = 'Location for making or matching (can be file or directory).')
 
     parser.add_argument('-o','--outfile',
