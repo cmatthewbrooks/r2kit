@@ -3,11 +3,13 @@ Author: Matt Brooks, @cmatthewbrooks
 
 DESCRIPTION:
 
-The r2utils class is a class of various functions to be used
-while coding against the radare2 r2pipes.
+This module includes multiple utility classes to assist
+in working with radare2 over r2pipe.
 
-NOTES:
-
+R2PipeUtility - designed to work directly on a pipe object.
+R2FuncUtility - designed to work on funcj objects from 'pdfj'.
+R2CallUtility - designed to work on CALL type opcodesself.
+R2ParseUtility - designed to parse random strings from disassembly objects.
 
 '''
 
@@ -16,22 +18,27 @@ import json
 
 import r2pipe
 
-class R2Utils:
+class R2PipeUtility:
+    '''
+    Methods in this class are designed to work directly on a r2pipe
+    object.
+    '''
+
+    R2PIPE_CLASS_NAME = 'r2pipe.open'
 
     def __init__(self):
         pass
-
 
     def get_analyzed_r2pipe_from_input(self, input_obj = None):
 
         if not input_obj:
             r2 = r2pipe.open()
-        elif str(input_obj.__class__) == 'r2pipe.open':
+        elif str(input_obj.__class__) == R2PipeUtility.R2PIPE_CLASS_NAME:
             r2 = input_obj
         elif os.path.isfile(input_obj):
-            r2 = r2pipe.open(input_obj)          
+            r2 = r2pipe.open(input_obj)
         else:
-            return None
+            raise Exception('Error: Not inside an r2 session.')
 
         try:
             r2.cmd("aflc")
@@ -46,14 +53,9 @@ class R2Utils:
 
         return r2
 
-
-####################################################################
-
-    # These methods get different types of overall function lists
-
     def get_funcj_list(self, r2):
 
-        if not str(r2.__class__) == 'r2pipe.open':
+        if not str(r2.__class__) == R2PipeUtility.R2PIPE_CLASS_NAME:
             return []
 
         funcj_list = []
@@ -65,18 +67,18 @@ class R2Utils:
             for func in functions:
 
                 funcj = r2.cmdj("pdfj @ " + hex(func['offset']))
-                
+
                 if funcj:
-                    
+
                     funcj_list.append(funcj)
 
         return funcj_list
 
     def get_aflj(self, r2):
 
-        if not str(r2.__class__) == 'r2pipe.open':
+        if not str(r2.__class__) == R2PipeUtility.R2PIPE_CLASS_NAME:
             return {}
-        
+
         functions = r2.cmdj("aflj")
 
         if functions:
@@ -84,19 +86,63 @@ class R2Utils:
         else:
             return {}
 
+class R2FuncUtility:
+    '''
+    Methods in this class are designed to operate on funcj objects
+    returned from the r2 command 'pdfj'.
+    '''
 
-####################################################################
+    IMPORT = 'import'
+    GLOBAL = 'global'
+    THUNK = 'thunk'
+    WRAPPER = 'wrapper'
+    FIRST_ROUND = 'firstround'
+    UTILITY = 'utility'
+    UNKNOWN = 'unknown'
 
-    # This section is all function checks of various types.
+    def __init__(self):
+        pass
+
+    def classify_func(self, funcj):
+
+        if self.check_is_import_jmp_func(funcj):
+            return R2FuncUtility.IMPORT
+        elif self.check_is_global_assignment_func(funcj):
+            return R2FuncUtility.GLOBAL
+        elif self.check_is_thunk_func(funcj):
+            return R2FuncUtility.THUNK
+        elif self.check_is_wrapper_func(funcj):
+            return R2FuncUtility.WRAPPER
+        elif self.check_is_first_round_func(funcj):
+            return R2FuncUtility.FIRST_ROUND
+        elif self.check_is_utility_func(funcj):
+            return R2FuncUtility.UTILITY
+        else:
+            return R2FuncUtility.UNKNOWN
+
+    def check_is_analysis_func(self, funcj):
+
+        if (self.check_is_import_jmp_func(funcj) or
+            self.check_is_global_assignment_func(funcj) or
+            self.check_is_thunk_func(funcj) or
+            self.check_is_wrapper_func(funcj)):
+
+            return False
+
+        else:
+
+            return True
 
     def check_is_import_jmp_func(self, funcj):
 
-        if (len(funcj['ops']) == 1 
-            and funcj['size'] == 6 
+        if (len(funcj['ops']) == 1
+            and funcj['size'] == 6
             and funcj['ops'][0]['type'] == 'jmp'):
 
             return True
+
         else:
+
             return False
 
     def check_is_global_assignment_func(self, funcj):
@@ -107,13 +153,17 @@ class R2Utils:
             return True
 
         else:
+
             return False
 
     def check_is_thunk_func(self, funcj):
 
         if 1 < len(funcj['ops']) <= 3:
+
             return True
+
         else:
+
             return False
 
     def check_is_wrapper_func(self, funcj):
@@ -123,8 +173,11 @@ class R2Utils:
         if (len(funcj['ops']) > 3 and
             len(funcj['ops']) <= 20 and
             calls == 1):
+
             return True
+
         else:
+
             return False
 
     def check_is_first_round_func(self, funcj):
@@ -132,15 +185,17 @@ class R2Utils:
         calls = self.get_call_count_from_funcj(funcj)
 
         if calls == 0:
+
             return True
+
         elif calls > 0:
+
             return False
 
     def check_is_utility_func(self, funcj):
-        
+
         call_xref_count = 0
 
-        #TODO: Fix this [0] hack
         if 'xrefs' in funcj['ops'][0]:
             for xref in funcj['ops'][0]['xrefs']:
                 if xref['type'] == 'CALL':
@@ -151,10 +206,6 @@ class R2Utils:
         elif call_xref_count <= 2:
             return False
 
-####################################################################
-
-    # These methods are various small utility methods
-
     def get_call_count_from_funcj(self, funcj):
 
         count = 0
@@ -162,16 +213,18 @@ class R2Utils:
         for op in funcj['ops']:
 
             if 'call' in op.get('opcode','N/A'):
-                count += 1        
+                count += 1
 
         return count
 
-    def parse_api_from_call(self, opcode):
+    def get_import_from_import_jmp_func(self, funcj):
 
-        prefix = 'call dword [sym.imp'
+        op = funcj['ops'][0]
 
-        #The '-1' strips the right bracket off the end
-        return opcode[len(prefix):len(opcode)-1]
+        return R2ParseUtility.parse_import_from_import_jmp_opcode(op)
+
+    # The get_call_from_wrapper method needs better thought and
+    # design. It's hacky right now.
 
     def get_call_from_wrapper(self, funcj):
 
@@ -183,26 +236,49 @@ class R2Utils:
 
         return wrapper_call
 
-    def get_import_from_import_jmp_func(self, funcj):
 
-        # Note: the prefix1/2 logic was added after an r2
-        # update. I am unsure why some disasm has the [ bracket
-        # while others do not.
-
-        import_string = ''
-        prefix1 = 'jmp dword ['
-        prefix2 = 'jmp dword '
-
-        for op in funcj['ops']:
-
-            import_string = op.get('disasm','N/A')
-
-            if prefix1 in op.get('disasm','N/A'):
-                return import_string[len(prefix1):len(import_string)-1]
-
-            elif prefix2 in op.get('disasm','N/A'):
-                return import_string[len(prefix2):len(import_string)]
+class R2CallUtility:
+    '''
+    Methods in this class are designed to operate on 'CALL' opcodes.
+    '''
+    def __init__(self):
+        pass
 
 
-if __name__ == "__main__":
-    test()
+class R2ParseUtility:
+    '''
+    Methods in this class handle various string parsing for strings
+    found in disassembly.
+
+    All methods in this class should have @staticmethod decorators
+    so they can easily be used by other class methods in this module.
+    '''
+
+    # Note: the prefix1/2 logic was added after an r2
+    # update. There is an inconsistency in the bracket between
+    # the visible disassembly and what the json returns via
+    # a pipe.
+
+    WINAPI_IMP_PREFIX_1 = 'jmp dword ['
+    WINAPI_IMP_PREFIX_2 = 'jmp dword '
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def parse_import_from_import_jmp_opcode(self, opcode):
+
+        import_string = opcode.get('disasm','N/A')
+
+        if R2ParseUtility.WINAPI_IMP_PREFIX_1 in op.get('disasm','N/A'):
+            return import_string[
+                len(R2ParseUtility.WINAPI_IMP_PREFIX_1):len(import_string)-1
+                ]
+
+        elif R2ParseUtility.WINAPI_IMP_PREFIX_2 in op.get('disasm','N/A'):
+            return import_string[
+                len(R2ParseUtility.WINAPI_IMP_PREFIX_2):len(import_string)
+                ]
+
+        else:
+            return ''
