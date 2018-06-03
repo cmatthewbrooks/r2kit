@@ -244,6 +244,26 @@ class R2FuncUtility:
 
         return wrapper_call
 
+class R2FlagUtility:
+    '''
+    Methods in this class are helpers to work with flag spaces.
+    '''
+
+    THUNK_FS = 'thunk-funcs'
+    WRAPPER_FS = 'wrapper-funcs'
+    GLOBAL_ASSIGNMENT_FS = 'global-assignments'
+    LIBRARY_CODE_FS = 'library-funcs'
+
+    @staticmethod
+    def check_if_flagspace_exists(flagspace, fsj):
+
+        for fs in fsj:
+
+            if fs['name'] == flagspace:
+
+                return True
+
+        return False
 
 class R2CallUtility:
     '''
