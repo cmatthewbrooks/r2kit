@@ -8,7 +8,9 @@ import json
 
 import r2pipe
 
-from r2utils import R2PipeUtility as r2pu, R2FuncUtility as r2fu
+from r2utils import R2PipeUtility as r2pu
+from r2utils import R2FuncUtility as r2fu
+from r2utils import R2FlagUtility as r2flu
 import sigs
 
 class SessionStarter:
@@ -50,6 +52,10 @@ class SessionStarter:
                 and funcj['name'].startswith('fcn.')):
 
                 self.r2.cmd('s ' + str(funcj['addr']))
+
+                self.r2.cmd('fs ' + r2flu.WRAPPER_FS)
+                self.r2.cmd('f ' + str(funcj['addr']))
+
                 self.r2.cmd('afn wrapper_' +
                     r2fu.get_call_from_wrapper(funcj).replace(' ','_')
                 )
@@ -58,13 +64,17 @@ class SessionStarter:
                 and funcj['name'].startswith('fcn.')):
 
                 self.r2.cmd('s ' + str(funcj['addr']))
+
+                self.r2.cmd('fs ' + r2flu.GLOBAL_ASSIGNMENT_FS)
+                self.r2.cmd('f ' + str(funcj['addr']))
+
                 self.r2.cmd(
                     'afn globalassign_' + funcj['name'].replace('.','')
                 )
 
 def usage():
 
-    print '\n' + sys.argv[0] + ' - a helper to start reversing sessions in an r2 shell'
+    print '\n' + sys.argv[0] + ' - a helper to start an r2 session.'
 
     print '''
 
