@@ -5,9 +5,7 @@ import json, base64
 
 import r2pipe
 
-import r2utils as r2u
-
-r2utils = r2u.R2Utils()
+from r2utils import R2PipeUtility as r2pu
 
 
 def print_func_strings(r2):
@@ -28,12 +26,12 @@ def print_func_strings(r2):
                 xrefto = r2.cmdj("axtj " + str(string['vaddr']))
 
                 if xrefto:
-                
+
                     for xref in xrefto:
 
                         # If the xref comes from a function, either add it
                         # to the list or add a new dictionary item.
-                        if ('fcn_name' in xref and 
+                        if ('fcn_name' in xref and
                             len(base64.b64decode(string['string'])) >= 10):
 
                             if xref['fcn_name'] in string_sets:
@@ -54,7 +52,7 @@ def print_func_strings(r2):
 
 if __name__ == '__main__':
 
-    r2 = r2utils.get_analyzed_r2pipe_from_input()
+    r2 = r2pu.get_analyzed_r2pipe_from_input()
 
     print_func_strings(r2)
 
