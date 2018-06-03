@@ -6,12 +6,10 @@ import os,sys
 import argparse
 import json
 
-import r2pipe 
+import r2pipe
 
-import r2utils as r2u
+from r2utils import R2PipeUtility as r2pu, R2FuncUtility as r2fu
 import sigs
-
-r2utils = r2u.R2Utils()
 
 class SessionStarter:
 
@@ -20,8 +18,8 @@ class SessionStarter:
     )
 
     def __init__(self, input_obj = None):
-        
-        self.r2 = r2utils.get_analyzed_r2pipe_from_input(input_obj)
+
+        self.r2 = r2pu.get_analyzed_r2pipe_from_input(input_obj)
 
     def auto_start(self):
 
@@ -36,27 +34,27 @@ class SessionStarter:
 
     def rename_common_funcs(self):
 
-        funcj_list = r2utils.get_funcj_list(self.r2)
+        funcj_list = r2pu.get_funcj_list(self.r2)
 
         for funcj in funcj_list:
 
-            if (r2utils.check_is_import_jmp_func(funcj) 
+            if (r2fu.check_is_import_jmp_func(funcj)
                 and funcj['name'].startswith('fcn.')):
 
                 self.r2.cmd('s ' + str(funcj['addr']))
-                self.r2.cmd('afn jmp_' + 
-                    r2utils.get_import_from_import_jmp_func(funcj)
+                self.r2.cmd('afn jmp_' +
+                    r2fu.get_import_from_import_jmp_func(funcj)
                 )
 
-            elif (r2utils.check_is_wrapper_func(funcj) 
+            elif (r2fu.check_is_wrapper_func(funcj)
                 and funcj['name'].startswith('fcn.')):
 
                 self.r2.cmd('s ' + str(funcj['addr']))
-                self.r2.cmd('afn wrapper_' + 
-                    r2utils.get_call_from_wrapper(funcj).replace(' ','_')
+                self.r2.cmd('afn wrapper_' +
+                    r2fu.get_call_from_wrapper(funcj).replace(' ','_')
                 )
 
-            elif (r2utils.check_is_global_assignment_func(funcj) 
+            elif (r2fu.check_is_global_assignment_func(funcj)
                 and funcj['name'].startswith('fcn.')):
 
                 self.r2.cmd('s ' + str(funcj['addr']))
@@ -96,25 +94,27 @@ if __name__ == '__main__':
         sys.exit(1)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-l','--location', 
-        help = 'Location of signatures for matching. Can be a file or directory.')
+
+    parser.add_argument('-l','--location',
+        help = 'Location of signatures for matching (file or directory).')
+
     args = parser.parse_args()
 
     r2 = r2pipe.open()
 
     if args.location and not os.path.exists(args.location):
 
-        print args.location + ' is not a valid location for signature matching.'
+        print args.location + ' is not a valid signature location.'
         sys.exit(1)
-    
+
     elif args.location and os.path.exists(args.location):
-    
+
         ss = SessionStarter(r2)
         ss.rename_library_code(args.location)
         ss.rename_common_funcs()
-    
+
     elif not args.location:
-    
+
         ss = SessionStarter(r2)
         ss.rename_common_funcs()
 
