@@ -271,16 +271,16 @@ class R2ParseUtility:
     WINAPI_IMP_PREFIX_2 = 'jmp dword '
 
     @staticmethod
-    def parse_import_from_import_jmp_opcode(self, opcode):
+    def parse_import_from_import_jmp_opcode(opcode):
 
         import_string = opcode.get('disasm','N/A')
 
-        if R2ParseUtility.WINAPI_IMP_PREFIX_1 in op.get('disasm','N/A'):
+        if R2ParseUtility.WINAPI_IMP_PREFIX_1 in opcode.get('disasm','N/A'):
             return import_string[
                 len(R2ParseUtility.WINAPI_IMP_PREFIX_1):len(import_string)-1
                 ]
 
-        elif R2ParseUtility.WINAPI_IMP_PREFIX_2 in op.get('disasm','N/A'):
+        elif R2ParseUtility.WINAPI_IMP_PREFIX_2 in opcode.get('disasm','N/A'):
             return import_string[
                 len(R2ParseUtility.WINAPI_IMP_PREFIX_2):len(import_string)
                 ]
