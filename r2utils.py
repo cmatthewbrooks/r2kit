@@ -249,10 +249,17 @@ class R2FlagUtility:
     Methods in this class are helpers to work with flag spaces.
     '''
 
+    DEVELOPER_FS = 'developer-funcs'
     THUNK_FS = 'thunk-funcs'
     WRAPPER_FS = 'wrapper-funcs'
-    GLOBAL_ASSIGNMENT_FS = 'global-assignments'
+    GLOBAL_ASSIGNMENT_FS = 'global-assignment-funcs'
     LIBRARY_CODE_FS = 'library-funcs'
+
+    DEVELOPER_FLAG = 'developer-func'
+    THUNK_FLAG = 'thunk-func'
+    WRAPPER_FLAG = 'wrapper-func'
+    GLOBAL_ASSIGNMENT_FLAG = 'global-assignment'
+    LIBRARY_CODE_FLAG = 'library-func'
 
     @staticmethod
     def check_if_flagspace_exists(flagspace, fsj):
