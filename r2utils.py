@@ -258,7 +258,7 @@ class R2FlagUtility:
     DEVELOPER_FLAG = 'developer-func'
     THUNK_FLAG = 'thunk-func'
     WRAPPER_FLAG = 'wrapper-func'
-    GLOBAL_ASSIGNMENT_FLAG = 'global-assignment'
+    GLOBAL_ASSIGNMENT_FLAG = 'global-assignment-func'
     LIBRARY_CODE_FLAG = 'library-func'
 
     @staticmethod
