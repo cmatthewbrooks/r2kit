@@ -25,16 +25,16 @@ class SessionStarter:
 
     def auto_start(self):
 
-        self.rename_library_code(SessionStarter.default_sig_location)
-        self.rename_common_funcs()
+        self.flag_and_rename_library_code(SessionStarter.default_sig_location)
+        self.flag_and_rename_nonlibrary_funcs()
 
-    def rename_library_code(self, location):
+    def flag_and_rename_library_code(self, location):
 
         # imported from sigs.py
         matcher = sigs.Matcher(location, self.r2)
         matcher.match()
 
-    def rename_common_funcs(self):
+    def flag_and_rename_nonlibrary_funcs(self):
 
         funcj_list = r2pu.get_funcj_list(self.r2)
 
@@ -54,7 +54,7 @@ class SessionStarter:
                 self.r2.cmd('s ' + str(funcj['addr']))
 
                 self.r2.cmd('fs ' + r2flu.WRAPPER_FS)
-                self.r2.cmd('f ' + str(funcj['addr']))
+                self.r2.cmd('f ' + r2flu.WRAPPER_FLAG)
 
                 self.r2.cmd('afn wrapper_' +
                     r2fu.get_call_from_wrapper(funcj).replace(' ','_')
@@ -66,11 +66,18 @@ class SessionStarter:
                 self.r2.cmd('s ' + str(funcj['addr']))
 
                 self.r2.cmd('fs ' + r2flu.GLOBAL_ASSIGNMENT_FS)
-                self.r2.cmd('f ' + str(funcj['addr']))
+                self.r2.cmd('f ' + r2flu.GLOBAL_ASSIGNMENT_FLAG)
 
                 self.r2.cmd(
                     'afn globalassign_' + funcj['name'].replace('.','')
                 )
+
+            elif (funcj['name'].startswith('fcn.')):
+
+                self.r2.cmd('s ' + str(funcj['addr']))
+
+                self.r2.cmd('fs ' + r2flu.DEVELOPER_FS)
+                self.r2.cmd('f ' + r2flu.DEVELOPER_FLAG)
 
 def usage():
 
@@ -105,6 +112,9 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
+    parser.add_argument('-s','--start', action='store_true',
+        help = "Start the session starter.")
+
     parser.add_argument('-l','--location',
         help = 'Location of signatures for matching (file or directory).')
 
@@ -112,20 +122,20 @@ if __name__ == '__main__':
 
     r2 = r2pipe.open()
 
-    if args.location and not os.path.exists(args.location):
+    if args.start and args.location and not os.path.exists(args.location):
 
         print args.location + ' is not a valid signature location.'
         sys.exit(1)
 
-    elif args.location and os.path.exists(args.location):
+    elif args.start and args.location and os.path.exists(args.location):
 
         ss = SessionStarter(r2)
-        ss.rename_library_code(args.location)
-        ss.rename_common_funcs()
+        ss.flag_and_rename_library_code(args.location)
+        ss.flag_and_rename_nonlibrary_funcs()
 
-    elif not args.location:
+    elif args.start and not args.location:
 
         ss = SessionStarter(r2)
-        ss.rename_common_funcs()
+        ss.flag_and_rename_nonlibrary_funcs()
 
     r2.quit()
