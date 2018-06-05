@@ -51,6 +51,9 @@ class Matcher:
 
                     self.r2.cmd('s ' + funcname)
 
+                    self.r2.cmd('fs ' + r2flu.R2KIT_ANALYZED_FS)
+                    self.r2.cmd('f ' + r2flu.R2KIT_ANALYZED_FLAG)
+
                     self.r2.cmd('fs ' + r2flu.LIBRARY_CODE_FS)
                     self.r2.cmd('f ' + r2flu.LIBRARY_CODE_FLAG)
 
