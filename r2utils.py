@@ -249,17 +249,26 @@ class R2FlagUtility:
     Methods in this class are helpers to work with flag spaces.
     '''
 
+    R2KIT_ANALYZED_FS = 'r2kit-analyzed-funcs'
     DEVELOPER_FS = 'developer-funcs'
     THUNK_FS = 'thunk-funcs'
     WRAPPER_FS = 'wrapper-funcs'
     GLOBAL_ASSIGNMENT_FS = 'global-assignment-funcs'
     LIBRARY_CODE_FS = 'library-funcs'
 
+    R2KIT_ANALYZED_FLAG = 'r2kit-analyzed-func'
     DEVELOPER_FLAG = 'developer-func'
     THUNK_FLAG = 'thunk-func'
     WRAPPER_FLAG = 'wrapper-func'
     GLOBAL_ASSIGNMENT_FLAG = 'global-assignment-func'
     LIBRARY_CODE_FLAG = 'library-func'
+
+    R2KIT_ANALYZED_FLAG_HACK = 'r2kit_analyzed_func'
+    DEVELOPER_FLAG_HACK = 'developer_func'
+    THUNK_FLAG_HACK = 'thunk_func'
+    WRAPPER_FLAG_HACK = 'wrapper_func'
+    GLOBAL_ASSIGNMENT_FLAG_HACK = 'global_assignment_func'
+    LIBRARY_CODE_FLAG_HACK = 'library_func'
 
     @staticmethod
     def check_if_flagspace_exists(flagspace, fsj):
@@ -271,6 +280,19 @@ class R2FlagUtility:
                 return True
 
         return False
+
+    @staticmethod
+    def get_developer_func_offsets_from_flagspace(fj):
+
+        developer_funcs = []
+
+        for f in fj:
+
+            if f['name'] == R2FlagUtility.DEVELOPER_FLAG_HACK:
+
+                developer_funcs.append(f['offset'])
+
+        return developer_funcs
 
 class R2CallUtility:
     '''
