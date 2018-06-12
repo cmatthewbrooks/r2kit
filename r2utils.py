@@ -73,18 +73,6 @@ class R2PipeUtility:
 
         return funcj_list
 
-    @staticmethod
-    def get_aflj_list(r2):
-
-        if not str(r2.__class__) == R2PipeUtility.R2PIPE_CLASS_NAME:
-            return {}
-
-        functions = r2.cmdj("aflj")
-
-        if functions:
-            return functions
-        else:
-            return {}
 
 class R2FuncUtility:
     '''
