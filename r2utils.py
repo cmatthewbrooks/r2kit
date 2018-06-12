@@ -8,7 +8,6 @@ in working with radare2 over r2pipe.
 
 R2PipeUtility - designed to work directly on a pipe object.
 R2FuncUtility - designed to work on funcj objects from 'pdfj'.
-R2CallUtility - designed to work on CALL type opcodesself.
 R2ParseUtility - designed to parse random strings from disassembly objects.
 
 '''
@@ -282,12 +281,6 @@ class R2FlagUtility:
 
         return developer_funcs
 
-class R2CallUtility:
-    '''
-    Methods in this class are designed to operate on 'CALL' opcodes.
-    '''
-    def __init__(self):
-        pass
 
 
 class R2ParseUtility:
