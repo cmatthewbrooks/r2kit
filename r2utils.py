@@ -8,7 +8,6 @@ in working with radare2 over r2pipe.
 
 R2PipeUtility - designed to work directly on a pipe object.
 R2FuncUtility - designed to work on funcj objects from 'pdfj'.
-R2ParseUtility - designed to parse random strings from disassembly objects.
 
 '''
 
@@ -54,7 +53,7 @@ class R2PipeUtility:
     def get_funcj_list(r2):
 
         if not str(r2.__class__) == R2PipeUtility.R2PIPE_CLASS_NAME:
-            return []
+            raise Exception('Error: Not inside an r2 session.')
 
         funcj_list = []
 
@@ -72,6 +71,50 @@ class R2PipeUtility:
 
         return funcj_list
 
+    @staticmethod
+    def get_function_start_from_offset(r2, offset=None):
+
+        if not str(r2.__class__) == R2PipeUtility.R2PIPE_CLASS_NAME:
+            raise Exception('Error: Not inside an r2 session.')
+
+        if offset:
+            return r2.cmdj('afij @ ' + hex(offset))[0]['offset']
+        else:
+            return r2.cmdj('afij')[0]['offset']
+
+    @staticmethod
+    def get_args_count_to_function_offset(r2, offset=None):
+
+        if not str(r2.__class__) == R2PipeUtility.R2PIPE_CLASS_NAME:
+            raise Exception('Error: Not inside an r2 session.')
+
+        if offset:
+            return r2.cmdj('afij @ ' + hex(offset))[0]['nargs']
+        else:
+            return r2.cmdj('afij')[0]['nargs']
+
+
+    @staticmethod
+    def get_call_xref_list_to_function_offset(r2, offset=None):
+
+        if not str(r2.__class__) == R2PipeUtility.R2PIPE_CLASS_NAME:
+            raise Exception('Error: Not inside an r2 session.')
+
+        xref_list = []
+
+        if offset:
+            funcj = r2.cmdj('pdfj @ ' + hex(offset))
+        else:
+            funcj = r2.cmdj('pdfj')
+
+        # The [0] hack is because xrefs to the function will
+        # only be included in the first ops entry.
+        if 'xrefs' in funcj['ops'][0]:
+            for xref in funcj['ops'][0]['xrefs']:
+                if xref['type'] == 'CALL':
+                    xref_list.append(xref['addr'])
+
+        return xref_list
 
 class R2FuncUtility:
     '''
@@ -215,7 +258,7 @@ class R2FuncUtility:
 
         op = funcj['ops'][0]
 
-        return R2ParseUtility.parse_import_from_import_jmp_opcode(op)
+        return R2DisassemblyUtility.parse_import_from_import_jmp_disasm(op)
 
     # The get_call_from_wrapper method needs better thought and
     # design. It's hacky right now.
@@ -230,6 +273,57 @@ class R2FuncUtility:
                 wrapper_call = op.get('opcode','N/A')
 
         return wrapper_call
+
+class R2InstructionUtility:
+    '''
+    Methods in this class operate on instructions typically returned
+    by 'pdj 1' or pdfj['ops'].
+    '''
+
+    @staticmethod
+    def is_mutator_instruction(pdj):
+
+        if pdj['type'] in ['mov','lea','add','sub']:
+            return True
+        else:
+            return False
+
+class R2DisassemblyUtility:
+    '''
+    Methods in this class handle various string parsing for strings
+    found in disassembly.
+    '''
+
+    # Note: the prefix1/2 logic was added after an r2
+    # update. There is an inconsistency in the bracket between
+    # the visible disassembly and what the json returns via
+    # a pipe.
+
+    WINAPI_IMP_PREFIX_1 = 'jmp dword ['
+    WINAPI_IMP_PREFIX_2 = 'jmp dword '
+
+    @staticmethod
+    def get_disasm_mutator(disasm):
+
+        return disasm.split(',')[1]
+
+    @staticmethod
+    def parse_import_from_import_jmp_disasm(opcode):
+
+        import_string = opcode.get('disasm','N/A')
+
+        if R2DisassemblyUtility.WINAPI_IMP_PREFIX_1 in opcode.get('disasm','N/A'):
+            return import_string[
+                len(R2DisassemblyUtility.WINAPI_IMP_PREFIX_1):len(import_string)-1
+                ]
+
+        elif R2DisassemblyUtility.WINAPI_IMP_PREFIX_2 in opcode.get('disasm','N/A'):
+            return import_string[
+                len(R2DisassemblyUtility.WINAPI_IMP_PREFIX_2):len(import_string)
+                ]
+
+        else:
+            return ''
 
 class R2FlagUtility:
     '''
@@ -280,40 +374,3 @@ class R2FlagUtility:
                 developer_funcs.append(f['offset'])
 
         return developer_funcs
-
-
-
-class R2ParseUtility:
-    '''
-    Methods in this class handle various string parsing for strings
-    found in disassembly.
-
-    All methods in this class should have @staticmethod decorators
-    so they can easily be used by other class methods in this module.
-    '''
-
-    # Note: the prefix1/2 logic was added after an r2
-    # update. There is an inconsistency in the bracket between
-    # the visible disassembly and what the json returns via
-    # a pipe.
-
-    WINAPI_IMP_PREFIX_1 = 'jmp dword ['
-    WINAPI_IMP_PREFIX_2 = 'jmp dword '
-
-    @staticmethod
-    def parse_import_from_import_jmp_opcode(opcode):
-
-        import_string = opcode.get('disasm','N/A')
-
-        if R2ParseUtility.WINAPI_IMP_PREFIX_1 in opcode.get('disasm','N/A'):
-            return import_string[
-                len(R2ParseUtility.WINAPI_IMP_PREFIX_1):len(import_string)-1
-                ]
-
-        elif R2ParseUtility.WINAPI_IMP_PREFIX_2 in opcode.get('disasm','N/A'):
-            return import_string[
-                len(R2ParseUtility.WINAPI_IMP_PREFIX_2):len(import_string)
-                ]
-
-        else:
-            return ''
