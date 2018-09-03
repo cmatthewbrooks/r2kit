@@ -6,15 +6,14 @@ DESCRIPTION:
 This module includes multiple utility classes to assist
 in working with radare2 over r2pipe.
 
-R2PipeUtility - designed to work directly on a pipe object.
-R2FuncUtility - designed to work on funcj objects from 'pdfj'.
-
 '''
 
 import os
 import json
 
 import r2pipe
+
+REGISTERS = ['eax','ebx','ecx','edx','esi','edi','esp','ebp']
 
 class R2PipeUtility:
     '''
@@ -119,7 +118,8 @@ class R2PipeUtility:
 class R2FuncUtility:
     '''
     Methods in this class are designed to operate on funcj objects
-    returned from the r2 command 'pdfj'.
+    returned from the r2 command 'pdfj' or afij objects returned
+    from the afij command.
     '''
 
     IMPORT = 'import'
@@ -258,7 +258,7 @@ class R2FuncUtility:
 
         op = funcj['ops'][0]
 
-        return R2DisassemblyUtility.parse_import_from_import_jmp_disasm(op)
+        return R2ParserUtility.parse_import_from_import_jmp_disasm(op)
 
     # The get_call_from_wrapper method needs better thought and
     # design. It's hacky right now.
@@ -269,10 +269,34 @@ class R2FuncUtility:
         wrapper_call = ''
 
         for op in funcj['ops']:
-            if 'call' in op.get('opcode','N/A'):
-                wrapper_call = op.get('opcode','N/A')
+            if 'call' in op.get('disasm','N/A'):
+                wrapper_call = op.get('disasm','N/A')
 
         return wrapper_call
+
+    @staticmethod
+    def get_raw_call_chain_from_funcj(funcj):
+
+        call_chain = []
+
+        for op in funcj['ops']:
+            if op['type'] in ['call','ucall']:
+                call_chain.append(op['disasm'])
+
+        return call_chain
+
+    @staticmethod
+    def get_func_stats_list_from_afij(afij):
+        pass
+
+
+    @staticmethod
+    def check_is_complex_func(afij):
+
+        if afij['nbbs'] > 5:
+            return True
+        else:
+            return False
 
 class R2InstructionUtility:
     '''
@@ -288,7 +312,62 @@ class R2InstructionUtility:
         else:
             return False
 
-class R2DisassemblyUtility:
+    @staticmethod
+    def get_disasm_mutator(disasm):
+
+        return disasm.split(',')[1]
+
+class R2CallUtility:
+
+    CALL_TYPE_DIRECT = 'direct'
+    CALL_TYPE_INDIRECT = 'indirect'
+    CALL_TYPE_IMPORT = 'import'
+    CALL_TYPE_LIBRARY = 'library'
+    CALL_TYPE_REGISTER = 'register'
+    CALL_TYPE_UNDEFINED = 'undefined'
+
+    CALL_PREFIX_DIRECT = 'fcn.'
+    CALL_PREFIX_INDIRECT = ['loc.','call dword [0x']
+    CALL_PREFIX_IMPORT = 'sym.imp.'
+    CALL_PREFIX_LIBRARY = 'sym.'
+
+
+    @staticmethod
+    def classify_call_disasm(disasm):
+
+        if check_is_call_type_direct(disasm):
+            return R2CallUtility.CALL_TYPE_DIRECT
+        elif check_is_call_type_indirect(disasm):
+            return R2CallUtility.CALL_TYPE_INDIRECT
+        elif check_is_call_type_import(disasm):
+            return R2CallUtility.CALL_TYPE_IMPORT
+
+    @staticmethod
+    def check_is_call_type_direct(disasm):
+
+        if R2CallUtility.CALL_PREFIX_DIRECT in disasm:
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def check_is_call_type_indirect(disasm):
+
+        if any([prefix in disasm for prefix in R2CallUtility.CALL_PREFIX_INDIRECT]):
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def check_is_call_type_import(disasm):
+
+        if R2CallUtility.CALL_PREFIX_IMPORT in disasm:
+            return True
+        else:
+            return False
+
+
+class R2ParserUtility:
     '''
     Methods in this class handle various string parsing for strings
     found in disassembly.
@@ -303,23 +382,18 @@ class R2DisassemblyUtility:
     WINAPI_IMP_PREFIX_2 = 'jmp dword '
 
     @staticmethod
-    def get_disasm_mutator(disasm):
-
-        return disasm.split(',')[1]
-
-    @staticmethod
     def parse_import_from_import_jmp_disasm(opcode):
 
         import_string = opcode.get('disasm','N/A')
 
-        if R2DisassemblyUtility.WINAPI_IMP_PREFIX_1 in opcode.get('disasm','N/A'):
+        if R2ParserUtility.WINAPI_IMP_PREFIX_1 in opcode.get('disasm','N/A'):
             return import_string[
-                len(R2DisassemblyUtility.WINAPI_IMP_PREFIX_1):len(import_string)-1
+                len(R2ParserUtility.WINAPI_IMP_PREFIX_1):len(import_string)-1
                 ]
 
-        elif R2DisassemblyUtility.WINAPI_IMP_PREFIX_2 in opcode.get('disasm','N/A'):
+        elif R2ParserUtility.WINAPI_IMP_PREFIX_2 in opcode.get('disasm','N/A'):
             return import_string[
-                len(R2DisassemblyUtility.WINAPI_IMP_PREFIX_2):len(import_string)
+                len(R2ParserUtility.WINAPI_IMP_PREFIX_2):len(import_string)
                 ]
 
         else:
