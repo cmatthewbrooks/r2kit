@@ -266,7 +266,7 @@ class StringSetGenerator(Generator):
         # First, get the strings and for each string, make sure it is
         # ascii or wide.
         if strings:
-            for string in strings['strings']:
+            for string in strings:
                 if string['type'] == 'ascii' or string['type'] == 'utf8':
 
                     # Next, get the cross references to the string.
