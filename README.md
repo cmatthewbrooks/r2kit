@@ -1,22 +1,16 @@
 # r2kit
 
-## Overview
+The code previously found in this repository has been properly re-designed and packaged. As such,
+this repository is no longer maintained. You can check the "old" branch to see the last state;
+however, due to changes in the r2pipe API, most of the code in the "old" branch is not functional.
 
-r2kit is a set of scripts to help with a workflow for malware code analysis using radare.
+If you are looking for the utilities to include in your own project or script, they are now packaged
+within [r2pyutils](https://github.com/cmatthewbrooks/r2pyutils). (funclist and funcstrings are
+included as utility scripts).
 
-* sessionstarter.py - Run from inside an r2 session to auto rename imports, thunks, wrapper functions, and library functions.
-* funclist.py - Run from inside an r2 session or externally against a binary to list certain function types.
-* functoyara.py - Run from inside an r2 session to create a YARA signature for the bytes of the current function.
-* funcstrings.py - Run from inside an r2 session to see all referenced strings organized by function.
+If you are looking for the signatures (from my r2con 2018 talk), this functionality is being split
+into a separate repository called [r2sigs](https://github.com/cmatthewbrooks/r2sigs).
 
-See [the workflow document](docs/WORKFLOW.md) for more information on usage.
-
-There is also a sigs.py file used to generate signature hashes or match signature hashes during a session. Read the [signatures](docs/SIGNATURES.md) document for more information on the usage and the [library info](docs/LIBINFO.md) document for more information on library code in general.
-
-## Thanks
-
-Thanks to Sanoop [@s4n7h0](https://twitter.com/@s4n7h0) for a half-day workshop pushing my radare interest over the edge.
-
-Thanks to Maxime [@Maijin212](https://twitter.com/@Maijin212) for a mailing-list response peaking my interest in r2pipes.
-
-Thanks to Marion [@pinkflawd](https://twitter.com/@pinkflawd) for r2graphity which was extremely helpful for r2pipes examples.
+If you are looking for the functoyara script, I'll make a better version of that available after the
+r2sigs work is complete. If you actually read this and want it sooner, message me and I can quickly
+whip up a gist.
